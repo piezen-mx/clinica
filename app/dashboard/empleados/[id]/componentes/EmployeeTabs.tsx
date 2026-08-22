@@ -10,6 +10,7 @@ interface Props {
 const TABS = (id_empleado: number) => [
   { href: `/dashboard/empleados/${id_empleado}`, label: "Datos Personales" },
   { href: `/dashboard/empleados/${id_empleado}/documentos`, label: "Documentación" },
+  { href: `/dashboard/empleados/${id_empleado}/asistencia`, label: "Asistencia" },
 ];
 
 export default function EmployeeTabs({ id_empleado }: Props) {
