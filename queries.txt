@@ -859,3 +859,118 @@ GO
 CREATE INDEX [IX_empleado_documentos_empleado]
     ON [RH].[empleado_documentos] ([id_empleado], [status]) INCLUDE ([id_tipo_documento])
 GO
+
+-------------------- ASISTENCIAS (checador biométrico) ---------------------
+USE [CentroPodologico]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- Mapea el identificador crudo que manda el checador (huella/tarjeta) a un empleado.
+-- Un mismo empleado puede tener varios identificadores (ej. huella + tarjeta de respaldo).
+CREATE TABLE [RH].[empleado_identificadores](
+    [id_empleado_identificador] [int] IDENTITY(1,1) NOT NULL,
+    [id_empleado]               [int]          NOT NULL,
+    [identificador]              [varchar](100) NOT NULL,   -- ID crudo reportado por el dispositivo
+    [tipo]                       [varchar](20)  NOT NULL,   -- 'huella' | 'tarjeta' | 'otro'
+    [status]                     [bit]          NOT NULL CONSTRAINT [DF_empleado_identificadores_status] DEFAULT (1),
+    [created_at]                 [datetime2](0) NULL,
+ CONSTRAINT [PK_empleado_identificadores] PRIMARY KEY CLUSTERED ([id_empleado_identificador] ASC),
+ CONSTRAINT [UQ_empleado_identificadores_identificador] UNIQUE ([identificador]),
+ CONSTRAINT [FK_empleado_identificadores_empleado] FOREIGN KEY ([id_empleado])
+     REFERENCES [RH].[empleados] ([id_empleado])
+) ON [PRIMARY]
+GO
+CREATE INDEX [IX_empleado_identificadores_empleado]
+    ON [RH].[empleado_identificadores] ([id_empleado], [status])
+GO
+
+-- Un renglón por checada (entrada o salida), tal como la reporta el dispositivo.
+CREATE TABLE [RH].[asistencias](
+    [id_asistencia]        [int] IDENTITY(1,1) NOT NULL,
+    [id_empleado]          [int]          NOT NULL,
+    [fecha_hora]           [datetime2](0) NOT NULL,   -- hora local (America/Mexico_City), nunca UTC
+    [tipo]                 [varchar](10)  NOT NULL,   -- 'entrada' | 'salida'
+    [identificador_origen] [varchar](100) NULL,       -- identificador crudo recibido, para auditoría
+    [created_at]           [datetime2](0) NULL,
+ CONSTRAINT [PK_asistencias] PRIMARY KEY CLUSTERED ([id_asistencia] ASC),
+ CONSTRAINT [FK_asistencias_empleado] FOREIGN KEY ([id_empleado])
+     REFERENCES [RH].[empleados] ([id_empleado])
+) ON [PRIMARY]
+GO
+CREATE INDEX [IX_asistencias_empleado_fecha]
+    ON [RH].[asistencias] ([id_empleado], [fecha_hora])
+GO
+
+-------------------- CHECADORES POR SUCURSAL ---------------------
+-- spec 27 — Checadores por sucursal y alta de PIN de empleado
+--
+-- Nota: al momento de correr este ALTER, RH.empleado_identificadores tenía 2 filas y
+-- RH.asistencias tenía 10 filas de pruebas previas (sin checador real asociado, porque
+-- RH.checadores no existía todavía). Se borraron antes del ALTER (decisión confirmada con
+-- el usuario) para poder agregar id_checador NOT NULL + FK sin dejar filas huérfanas
+-- apuntando a un id_checador = 0 inexistente.
+USE [CentroPodologico]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+DELETE FROM [RH].[asistencias]
+GO
+DELETE FROM [RH].[empleado_identificadores]
+GO
+
+CREATE TABLE [RH].[checadores](
+    [id_checador] [int] IDENTITY(1,1) NOT NULL,
+    [sn]          [varchar](50)  NOT NULL,   -- número de serie, debe calzar EXACTO con ?SN= del dispositivo
+    [id_sucursal] [int]          NOT NULL,
+    [nombre]      [varchar](100) NOT NULL,   -- descriptivo, ej. "Entrada principal"
+    [activo]      [bit]          NOT NULL CONSTRAINT [DF_checadores_activo] DEFAULT (1),
+    [status]      [bit]          NOT NULL CONSTRAINT [DF_checadores_status] DEFAULT (1),
+    [created_at]  [datetime2](0) NULL,
+ CONSTRAINT [PK_checadores] PRIMARY KEY CLUSTERED ([id_checador] ASC),
+ CONSTRAINT [UQ_checadores_sn] UNIQUE ([sn]),
+ CONSTRAINT [FK_checadores_sucursal] FOREIGN KEY ([id_sucursal])
+     REFERENCES [dbo].[sucursales] ([id_sucursal])
+) ON [PRIMARY]
+GO
+CREATE INDEX [IX_checadores_sucursal]
+    ON [RH].[checadores] ([id_sucursal], [status])
+GO
+
+-- Alteración: RH.empleado_identificadores — reemplaza UNIQUE global por (id_checador, identificador)
+ALTER TABLE [RH].[empleado_identificadores]
+    DROP CONSTRAINT [UQ_empleado_identificadores_identificador]
+GO
+ALTER TABLE [RH].[empleado_identificadores]
+    ADD [id_checador] [int] NOT NULL CONSTRAINT [DF_empleado_identificadores_checador] DEFAULT (0)
+GO
+ALTER TABLE [RH].[empleado_identificadores]
+    DROP CONSTRAINT [DF_empleado_identificadores_checador]
+GO
+ALTER TABLE [RH].[empleado_identificadores]
+    ADD CONSTRAINT [FK_empleado_identificadores_checador] FOREIGN KEY ([id_checador])
+        REFERENCES [RH].[checadores] ([id_checador])
+GO
+ALTER TABLE [RH].[empleado_identificadores]
+    ADD CONSTRAINT [UQ_empleado_identificadores_checador_identificador] UNIQUE ([id_checador], [identificador])
+GO
+
+-- Alteración: RH.asistencias — agrega id_checador NOT NULL + FK + índice
+ALTER TABLE [RH].[asistencias]
+    ADD [id_checador] [int] NOT NULL CONSTRAINT [DF_asistencias_checador] DEFAULT (0)
+GO
+ALTER TABLE [RH].[asistencias]
+    DROP CONSTRAINT [DF_asistencias_checador]
+GO
+ALTER TABLE [RH].[asistencias]
+    ADD CONSTRAINT [FK_asistencias_checador] FOREIGN KEY ([id_checador])
+        REFERENCES [RH].[checadores] ([id_checador])
+GO
+CREATE INDEX [IX_asistencias_checador]
+    ON [RH].[asistencias] ([id_checador], [fecha_hora])
+GO
