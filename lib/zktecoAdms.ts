@@ -37,30 +37,53 @@ export function parseAttlogBody(body: string): ParsedAttlogRecord[] {
 }
 
 /**
- * Inserta las checadas ya parseadas en RH.asistencias, resolviendo cada PIN
- * contra RH.empleado_identificadores. Un PIN no reconocido se ignora (solo se
- * loguea) para no romper el ack que espera el checador ni tumbar el resto del lote.
+ * Resuelve el SN recibido en el handshake/POST contra RH.checadores. Devuelve
+ * el id_checador si existe y está activo (status = 1); null si no se reconoce
+ * o está dado de baja — nunca se auto-registra un checador desconocido.
  */
-export async function saveAttendanceRecords(records: ParsedAttlogRecord[]): Promise<void> {
+export async function resolveChecadorBySN(sn: string): Promise<number | null> {
+  const rows = await db.queryParams(
+    `SELECT [id_checador]
+       FROM [RH].[checadores]
+      WHERE [sn] = @sn AND [status] = 1`,
+    { sn },
+  );
+  return rows.length > 0 ? (rows[0].id_checador as number) : null;
+}
+
+/**
+ * Inserta las checadas ya parseadas en RH.asistencias, resolviendo cada PIN
+ * contra RH.empleado_identificadores por (id_checador, identificador) — el mismo
+ * PIN puede pertenecer a empleados distintos en checadores distintos. Un PIN no
+ * reconocido en ESE checador se ignora (solo se loguea) para no romper el ack
+ * que espera el dispositivo ni tumbar el resto del lote.
+ */
+export async function saveAttendanceRecords(
+  records: ParsedAttlogRecord[],
+  idChecador: number,
+): Promise<void> {
   for (const record of records) {
     const empleado = await db.queryParams(
       `SELECT [id_empleado]
          FROM [RH].[empleado_identificadores]
-        WHERE [identificador] = @identificador AND [status] = 1`,
-      { identificador: record.identificador },
+        WHERE [id_checador] = @id_checador AND [identificador] = @identificador AND [status] = 1`,
+      { id_checador: idChecador, identificador: record.identificador },
     );
 
     if (empleado.length === 0) {
-      console.warn(`[asistencias] PIN no reconocido en el checador: ${record.identificador}`);
+      console.warn(
+        `[asistencias] PIN no reconocido en el checador ${idChecador}: ${record.identificador}`,
+      );
       continue;
     }
 
     await db.queryParams(
       `INSERT INTO [RH].[asistencias]
-         ([id_empleado], [fecha_hora], [tipo], [identificador_origen], [created_at])
-       VALUES (@id_empleado, @fecha_hora, @tipo, @identificador, @created_at)`,
+         ([id_empleado], [id_checador], [fecha_hora], [tipo], [identificador_origen], [created_at])
+       VALUES (@id_empleado, @id_checador, @fecha_hora, @tipo, @identificador, @created_at)`,
       {
         id_empleado: empleado[0].id_empleado,
+        id_checador: idChecador,
         fecha_hora: toDBString(record.fechaHora),
         tipo: record.tipo,
         identificador: record.identificador,
