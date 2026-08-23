@@ -2,6 +2,7 @@
 
 import db from "@/database/connection";
 import { ICatState, ISucursal, ISucursalCalendario } from "@/interfaces/sucursal";
+import { IChecador, ChecadorFormInput } from "@/interfaces/checador";
 import { IAuthUser } from "@/interfaces/auth";
 import { buildDate } from "@/utils/date_helpper";
 import { revalidatePath } from "next/cache";
@@ -9,6 +10,10 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET_SEED!);
+
+type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; message: string };
 
 async function getActiveUser(): Promise<IAuthUser> {
   const cookieStore = await cookies();
@@ -309,4 +314,97 @@ export async function setSelectedSucursal(
   });
 
   void user; // used indirectly via getActiveUser guard
+}
+
+export async function getChecadores(id_sucursal: number): Promise<IChecador[]> {
+  const { id_empresa } = await getActiveUser();
+  const data = await db.queryParams(
+    `SELECT c.[id_checador],
+            c.[sn],
+            c.[id_sucursal],
+            c.[nombre],
+            c.[activo],
+            c.[status],
+            CONVERT(varchar(19), c.[created_at], 120) AS created_at
+       FROM [CentroPodologico].[RH].[checadores] c
+       JOIN [CentroPodologico].[dbo].[sucursales] s ON s.[id_sucursal] = c.[id_sucursal]
+      WHERE c.[id_sucursal] = @id_sucursal
+        AND c.[status] = 1
+        AND s.[id_empresa] = @id_empresa
+      ORDER BY c.[id_checador]`,
+    { id_sucursal, id_empresa }
+  );
+  return data as IChecador[];
+}
+
+export async function saveChecador(
+  input: ChecadorFormInput & { id_checador?: number }
+): Promise<ActionResult<number>> {
+  try {
+    const { sn, id_sucursal, nombre, id_checador } = input;
+    const { id_empresa } = await getActiveUser();
+
+    // La sucursal debe pertenecer a la empresa del usuario.
+    const sucursal = await db.queryParams(
+      `SELECT [id_sucursal] FROM [CentroPodologico].[dbo].[sucursales]
+        WHERE [id_sucursal] = @id_sucursal AND [id_empresa] = @id_empresa`,
+      { id_sucursal, id_empresa }
+    );
+    if (sucursal.length === 0) {
+      return { ok: false, message: "La sucursal no pertenece a tu empresa" };
+    }
+
+    // El SN debe ser único entre todos los checadores (de cualquier sucursal), salvo el propio al editar.
+    const existing = await db.queryParams(
+      `SELECT [id_checador] FROM [CentroPodologico].[RH].[checadores]
+        WHERE [sn] = @sn AND [id_checador] <> @id_checador`,
+      { sn, id_checador: id_checador ?? 0 }
+    );
+    if (existing.length > 0) {
+      return { ok: false, message: "Ese número de serie (SN) ya está en uso por otro checador" };
+    }
+
+    if (!id_checador) {
+      const inserted = await db.queryParams(
+        `INSERT INTO [CentroPodologico].[RH].[checadores]
+           ([sn], [id_sucursal], [nombre], [activo], [status], [created_at])
+         OUTPUT INSERTED.[id_checador]
+         VALUES (@sn, @id_sucursal, @nombre, 1, 1, @created_at)`,
+        { sn, id_sucursal, nombre, created_at: buildDate(new Date()) }
+      );
+      const newId = (inserted[0] as { id_checador: number }).id_checador;
+      revalidatePath("/dashboard/sucursales");
+      return { ok: true, data: newId };
+    }
+
+    await db.queryParams(
+      `UPDATE [CentroPodologico].[RH].[checadores]
+          SET [sn] = @sn, [id_sucursal] = @id_sucursal, [nombre] = @nombre
+        WHERE [id_checador] = @id_checador`,
+      { sn, id_sucursal, nombre, id_checador }
+    );
+    revalidatePath("/dashboard/sucursales");
+    return { ok: true, data: id_checador };
+  } catch {
+    return { ok: false, message: "Error al guardar el checador" };
+  }
+}
+
+export async function deactivateChecador(id_checador: number): Promise<ActionResult<null>> {
+  try {
+    const { id_empresa } = await getActiveUser();
+    await db.queryParams(
+      `UPDATE c
+          SET c.[status] = 0
+         FROM [CentroPodologico].[RH].[checadores] c
+         JOIN [CentroPodologico].[dbo].[sucursales] s ON s.[id_sucursal] = c.[id_sucursal]
+        WHERE c.[id_checador] = @id_checador
+          AND s.[id_empresa] = @id_empresa`,
+      { id_checador, id_empresa }
+    );
+    revalidatePath("/dashboard/sucursales");
+    return { ok: true, data: null };
+  } catch {
+    return { ok: false, message: "Error al dar de baja el checador" };
+  }
 }

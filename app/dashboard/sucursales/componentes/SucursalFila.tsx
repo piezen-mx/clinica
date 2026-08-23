@@ -5,6 +5,7 @@ import { deleteSucursal } from "../actions";
 import { useState } from "react";
 import ConfirmModal from "@/app/dashboard/servicios/componentes/ConfirmModal";
 import SucursalCalendariosModal from "./SucursalCalendariosModal";
+import SucursalCheckadoresModal from "./SucursalCheckadoresModal";
 
 interface Props {
   sucursal: ISucursal;
@@ -18,6 +19,7 @@ export default function SucursalFila({ sucursal: s, onEdit, onDeleted, readOnly 
   const [deleting, setDeleting]               = useState(false);
   const [errorMsg, setErrorMsg]               = useState<string | null>(null);
   const [showCalendariosModal, setShowCalendariosModal] = useState(false);
+  const [showChecadoresModal, setShowChecadoresModal]   = useState(false);
 
   const handleConfirmDelete = async () => {
     setDeleting(true);
@@ -49,6 +51,14 @@ export default function SucursalFila({ sucursal: s, onEdit, onDeleted, readOnly 
               className="rounded-md bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600 transition-colors"
             >
               Calendarios
+            </button>
+          )}
+          {!readOnly && (
+            <button
+              onClick={() => setShowChecadoresModal(true)}
+              className="rounded-md bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+            >
+              Checadores
             </button>
           )}
           {!readOnly && (
@@ -85,6 +95,14 @@ export default function SucursalFila({ sucursal: s, onEdit, onDeleted, readOnly 
           id_sucursal={s.id_sucursal}
           nombreSucursal={s.nombre}
           onClose={() => setShowCalendariosModal(false)}
+        />
+      )}
+
+      {showChecadoresModal && (
+        <SucursalCheckadoresModal
+          id_sucursal={s.id_sucursal}
+          nombreSucursal={s.nombre}
+          onClose={() => setShowChecadoresModal(false)}
         />
       )}
     </>

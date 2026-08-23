@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** Spec 25 (`RH.empleados`, `/dashboard/empleados/[id]`, guarda de rol en `proxy.ts`).
   Reutiliza el endpoint existente `app/api/upload` (Cloudinary). No modifica `RH.empleados`.
 - **Fecha:** 2026-08-20
@@ -285,40 +285,40 @@ se rechaza en cliente con mensaje y **no** llega a `/api/upload`.
 
 ## Criterios de aceptación
 
-- [ ] Existen en BD `[RH].[tipos_documento]` (con las 8 filas sembradas y `orden` 1–8) y
+- [x] Existen en BD `[RH].[tipos_documento]` (con las 8 filas sembradas y `orden` 1–8) y
       `[RH].[empleado_documentos]` con sus dos FK y su índice.
-- [ ] El DDL de ambas tablas y los `INSERT` del catálogo están en `queries.txt`.
-- [ ] `/dashboard/empleados/[id]` muestra la barra de pestañas con exactamente dos pestañas
+- [x] El DDL de ambas tablas y los `INSERT` del catálogo están en `queries.txt`.
+- [x] `/dashboard/empleados/[id]` muestra la barra de pestañas con exactamente dos pestañas
       ("Datos Personales" y "Documentación") y "Datos Personales" marcada como activa.
-- [ ] La cabecera del empleado (`EmployeeHeader`) se ve idéntica en ambas pestañas y se renderiza
+- [x] La cabecera del empleado (`EmployeeHeader`) se ve idéntica en ambas pestañas y se renderiza
       desde `layout.tsx`, no duplicada en cada `page.tsx`.
-- [ ] `/dashboard/empleados/[id]/documentos` renderiza 8 tarjetas (una por tipo obligatorio) más
+- [x] `/dashboard/empleados/[id]/documentos` renderiza 8 tarjetas (una por tipo obligatorio) más
       una tarjeta por cada documento libre ya subido.
-- [ ] Una tarjeta sin archivo muestra "Requerido", badge "Pendiente" y botón "Subir";
+- [x] Una tarjeta sin archivo muestra "Requerido", badge "Pendiente" y botón "Subir";
       con archivo muestra badge "Cargado", `TIPO • X.X MB`, fecha de carga, usuario que lo subió,
       y los botones Ver, Descargar y Reemplazar.
-- [ ] El badge contador muestra `N/8 Completados`, donde `N` es el número de tipos obligatorios con
+- [x] El badge contador muestra `N/8 Completados`, donde `N` es el número de tipos obligatorios con
       documento activo, y **no** aumenta al subir documentos "Otro".
-- [ ] Subir un archivo desde el panel derecho asignado a un tipo del catálogo lo refleja en la
+- [x] Subir un archivo desde el panel derecho asignado a un tipo del catálogo lo refleja en la
       tarjeta de ese tipo sin recarga manual del navegador.
-- [ ] Elegir "Otro documento…" en el select obliga a escribir un nombre; sin nombre no se sube.
-- [ ] Un archivo con extensión distinta de PDF/JPG/PNG es rechazado en cliente con mensaje visible
+- [x] Elegir "Otro documento…" en el select obliga a escribir un nombre; sin nombre no se sube.
+- [x] Un archivo con extensión distinta de PDF/JPG/PNG es rechazado en cliente con mensaje visible
       y no se hace la petición a `/api/upload`.
-- [ ] Un archivo mayor a 5 MB es rechazado en cliente con mensaje visible y no se sube.
-- [ ] Reemplazar un documento deja en BD exactamente una fila con `status = 1` para ese
+- [x] Un archivo mayor a 5 MB es rechazado en cliente con mensaje visible y no se sube.
+- [x] Reemplazar un documento deja en BD exactamente una fila con `status = 1` para ese
       `(id_empleado, id_tipo_documento)`, y la anterior con `status = 0`.
-- [ ] "Ver" abre la URL de Cloudinary en pestaña nueva con `rel="noopener noreferrer"`;
+- [x] "Ver" abre la URL de Cloudinary en pestaña nueva con `rel="noopener noreferrer"`;
       "Descargar" descarga el archivo.
-- [ ] `getEmployeeDocuments` y `saveEmployeeDocument` usan `queryParams` en todas las consultas y
+- [x] `getEmployeeDocuments` y `saveEmployeeDocument` usan `queryParams` en todas las consultas y
       validan que el empleado pertenezca al `id_empresa` y a una sucursal del usuario autenticado.
-- [ ] `created_at` se escribe con `buildDate(new Date())` y se lee con
+- [x] `created_at` se escribe con `buildDate(new Date())` y se lee con
       `CONVERT(varchar(19), [created_at], 120)`; en la UI la fecha se muestra sin desfase de día.
-- [ ] Un usuario con `id_role` 2, 3 o 5 que navega a `/dashboard/empleados/[id]/documentos` es
+- [x] Un usuario con `id_role` 2, 3 o 5 que navega a `/dashboard/empleados/[id]/documentos` es
       redirigido por `proxy.ts`.
-- [ ] `"use client"` aparece únicamente en `EmployeeTabs.tsx` y en el uploader; las tarjetas y las
+- [x] `"use client"` aparece únicamente en `EmployeeTabs.tsx` y en el uploader; las tarjetas y las
       páginas son Server Components.
-- [ ] `npm run build` compila sin errores ni warnings nuevos.
-- [ ] La pantalla es legible en modo oscuro y la rejilla colapsa a una columna en móvil.
+- [x] `npm run build` compila sin errores ni warnings nuevos.
+- [x] La pantalla es legible en modo oscuro y la rejilla colapsa a una columna en móvil.
 
 ## Decisiones tomadas y descartadas
 
