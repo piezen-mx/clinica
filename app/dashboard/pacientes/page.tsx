@@ -138,7 +138,6 @@ export default function PacientesPage() {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    // console.log(form)
     // return
     try {
       const result = await savePaciente(form);

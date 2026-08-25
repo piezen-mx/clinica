@@ -265,7 +265,6 @@ export default function EstadisticasCharts() {
       setLoading(false);
     }
   };
-// console.log(data?.metodos_pago)
   const fetchDataMulti = async (inicio: string, fin: string, ids: number[]) => {
     if (ids.length === 0) { setData(null); return; }
     setLoading(true);

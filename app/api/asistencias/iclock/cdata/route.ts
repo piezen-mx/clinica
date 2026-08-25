@@ -57,7 +57,7 @@ export const POST = async (req: Request) => {
   const table = searchParams.get("table") ?? "";
   const serialNumber = searchParams.get("SN") ?? "";
   const body = await req.text();
-  console.log(`[asistencias] POST table=${table} SN=${serialNumber} body=${body.slice(0, 500)}`);
+  // console.log(`[asistencias] POST table=${table} SN=${serialNumber} body=${body.slice(0, 500)}`);
   try {
     if (table === "ATTLOG") {
       const idChecador = await resolveChecadorBySN(serialNumber);
@@ -73,7 +73,7 @@ export const POST = async (req: Request) => {
       });
     }
 
-    console.log(`[asistencias] POST table=${table} ignorado`, body.slice(0, 500));
+    // console.log(`[asistencias] POST table=${table} ignorado`, body.slice(0, 500));
     return new NextResponse("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
   } catch (error) {
     console.error({ error });

@@ -39,8 +39,8 @@ When writing or modifying any component or page, prioritize idiomatic Next.js (A
 
 ### Mutations go through Server Actions, not API routes
 
-- Almost all data mutation/reads happen via Next.js Server Actions (`"use server"` files named `actions.ts`), one per dashboard feature: `app/dashboard/<feature>/actions.ts` (citas, enlaces, pacientes, productos, servicios, sucursales, tratamientos, usuarios, ventas) plus `app/dashboard/actions.ts` and `app/actions/auth.ts`.
-- `app/api/` only has a single real REST route (`app/api/upload`, for file/image upload to Cloudinary). Don't add new REST endpoints for CRUD — follow the server-action pattern instead.
+- Almost all data mutation/reads happen via Next.js Server Actions (`"use server"` files named `actions.ts`), one per dashboard feature: `app/dashboard/<feature>/actions.ts` (citas, conteos, empleados, enlaces, movimientos, pacientes, pedidos, productos, proveedores, recepciones, servicios, sucursales, tratamientos, usuarios, ventas) plus `app/dashboard/actions.ts` and `app/actions/auth.ts`.
+- `app/api/` only has two real REST routes, both out of protocol necessity rather than CRUD: `app/api/upload` (file/image upload to Cloudinary) and `app/api/asistencias/iclock/*` (ADMS/iClock webhook that ZKTeco biometric attendance devices push to — see Attendance/biometric checadores below). Don't add new REST endpoints for CRUD — follow the server-action pattern instead; a new REST route is only justified when an external system dictates the wire protocol, like the checador webhook.
 - Actions commonly return a discriminated union like `ActionResult<T> = { ok: true; data: T } | { ok: false; message: string }` (see `app/actions/auth.ts`) — follow this convention for new actions so client code can branch on `result.ok`.
 
 ### Auth & authorization
@@ -58,6 +58,15 @@ When writing or modifying any component or page, prioritize idiomatic Next.js (A
 
 - `contexts/SucursalContext.tsx` tracks the currently selected branch (`id_sucursal`) client-side, seeded from an initial value and persisted via `setSelectedSucursal` (`app/dashboard/sucursales/actions.ts`). If a user only has access to one branch (`sucursales_string` has one entry), that branch is forced.
 - Each branch (`sucursal`) has its own linked Google Calendar (`link_calendar` column) for scheduling citas — see `lib/googleCalendar.ts`.
+
+### Domain modules with detailed docs (loaded on demand)
+
+The sections below used to live inline here but are long and only relevant when a task actually touches that module. They now live under `docs/` — **read the relevant file only when the current task touches that area**; don't load them speculatively:
+
+- HR — Employees (`empleados/`, `RH.empleados`, document/attendance tabs): `docs/rh-empleados.md`
+- Attendance / biometric checadores (ZKTeco ADMS webhook, `app/api/asistencias/iclock/*`): `docs/asistencias-biometricas.md`
+- Inventory (productos, proveedores, pedidos, recepciones, movimientos, conteos): `docs/inventario.md`
+- Google Calendar integration internals (service account JWT, PKCS conversion, env vars): `docs/google-calendar.md`
 
 ### Date/time handling (critical, mssql-specific)
 
@@ -80,8 +89,9 @@ Rules when touching any code with `fecha*`/`created_at`/date fields:
 
 ### Directory conventions
 
-- `app/dashboard/<feature>/` — one folder per feature (citas, pacientes, productos, servicios, sucursales, tratamientos, usuarios, ventas, enlaces), each with `page.tsx`, `actions.ts`, and a `componentes/` subfolder for feature-local components.
-- `interfaces/` — one file per domain entity (`paciente.ts`, `cita.ts`, `tratamiento.ts`, etc.), plain TS interfaces mirroring DB rows/DTOs.
+- `app/dashboard/<feature>/` — one folder per feature (citas, conteos, empleados, enlaces, movimientos, pacientes, pedidos, productos, proveedores, recepciones, servicios, sucursales, tratamientos, usuarios, ventas), each with `page.tsx`, `actions.ts`, and a `componentes/` subfolder for feature-local components. A feature with a detail view nests it under `<feature>/[id]/` (see `empleados/[id]/`, tabbed via its own `layout.tsx`).
+- `app/api/asistencias/iclock/` — ADMS/iClock webhook for ZKTeco biometric checadores (see `docs/asistencias-biometricas.md`); the only other REST route besides `app/api/upload`.
+- `interfaces/` — one file per domain entity (`paciente.ts`, `cita.ts`, `tratamiento.ts`, `employee.ts`, `checador.ts`, `purchase_order.ts`, `movement.ts`, `stock_count.ts`, etc.), plain TS interfaces mirroring DB rows/DTOs.
 - `contexts/` — global client providers: `AuthContext`, `SucursalContext`, `ThemeContext`.
-- `lib/` — cross-cutting server-side integrations (Google Calendar, rate limiter), as opposed to `utils/` which holds small pure helpers (date formatting, random ids).
+- `lib/` — cross-cutting server-side integrations (Google Calendar, rate limiter, ZKTeco ADMS parsing in `zktecoAdms.ts`, inventory logic in `lib/inventory/`), as opposed to `utils/` which holds small pure helpers (date formatting, random ids).
 - Path alias `@/*` maps to the repo root (see `tsconfig.json`).
