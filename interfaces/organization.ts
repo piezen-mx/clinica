@@ -43,3 +43,36 @@ export type OrganizationLegalInput = Pick<
 
 /** Modo de operación de una organización: sandbox o producción. */
 export type FacturapiMode = "test" | "live";
+
+/** Datos de un cliente de Facturapi capturados en el formulario (spec 29). */
+export interface ICustomerFormInput {
+  legal_name:   string;
+  tax_id:       string;
+  tax_system:   string;
+  email:        string;
+  phone:        string | null;
+  street:       string | null;
+  exterior:     string | null;
+  interior:     string | null;
+  neighborhood: string | null;
+  zip:          string;
+  city:         string | null;
+  municipality: string | null;
+  state:        string | null;
+  country:      string | null;
+}
+
+/** Datos de un producto de Facturapi capturados en el formulario (spec 29). */
+export interface IProductFormInput {
+  description:  string;
+  product_key:  string;  // clave del catálogo SAT
+  unit_key:     string;  // clave de unidad SAT, default "H87"
+  price:        number;  // validado: nunca NaN
+  tax_included: boolean;
+}
+
+/** Resultado del buscador del catálogo SAT (spec 29). */
+export interface ISatProductSuggestion {
+  key:         string;
+  description: string;
+}

@@ -364,7 +364,11 @@ export type BillingAuditAction =
   | "cert.delete"
   | "key.renew_test"
   | "key.renew_live"
-  | "key.revoke_live";
+  | "key.revoke_live"
+  | "customer.create"
+  | "customer.update"
+  | "product.create"
+  | "product.update";
 
 export interface INewAuditEntry {
   id_empresa: number;
