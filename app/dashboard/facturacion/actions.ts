@@ -2,10 +2,10 @@
 
 /**
  * Server actions del módulo de facturación. Porta `app/actions/organizations.ts`
- * del proyecto `factura` original (spec 28) — solo la administración de
- * organizaciones (listar, crear, editar datos legales, eliminar, certificado CSD,
- * API keys). `uploadOrganizationLogo` y `updateOrganizationCustomization` quedan
- * para el spec 31 (Personalización); `setOrgMode` para el spec 30 (modo Live).
+ * del proyecto `factura` original (spec 28) — administración de organizaciones
+ * (listar, crear, editar datos legales, eliminar, certificado CSD, API keys) y,
+ * desde el spec 30, el cambio de modo (`setOrgMode`). `uploadOrganizationLogo` y
+ * `updateOrganizationCustomization` quedan para el spec 31 (Personalización).
  *
  * Todas las llamadas a Facturapi usan `getRootClient()` (la clave de plataforma),
  * no `getOrgClient()`: administrar organizaciones es una operación de cuenta, no
@@ -33,6 +33,7 @@ import {
   CreateOrganizationSchema,
   UpdateOrganizationLegalSchema,
   UploadCertificateSchema,
+  SetOrgModeSchema,
 } from "@/lib/billing/schemas";
 import {
   getOrganizationByUid,
@@ -42,6 +43,7 @@ import {
   updateOrganizationLegal as updateOrganizationLegalRecord,
   setTestKey,
   setLiveKey,
+  setLiveMode,
   deleteOrganizationByUid,
   writeAuditEntry,
 } from "@/lib/billing/organizationsRepository";
@@ -506,6 +508,72 @@ export async function deleteLiveApiKey(orgId: string, keyId: string): Promise<Ac
 
     revalidatePath(`/dashboard/facturacion/${uid}/general`);
     return { ok: true, data: remaining };
+  } catch (err) {
+    return { ok: false, message: toUserMessage(err) };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Modo Live (spec 30)
+// ---------------------------------------------------------------------------
+
+/**
+ * Activa o desactiva el modo Live de una organización. **No basta con escribir
+ * `is_live`**: el original lo hacía directo (`setOrgMode` de la referencia) y el
+ * error de "falta CSD" o "falta clave Live" aparecía después, al primer intento
+ * de timbrar — con el usuario ya creyendo estar en producción. Aquí, activar
+ * falla *antes* de tocar la base de datos si falta cualquiera de las dos
+ * precondiciones, y `is_live` no cambia cuando eso ocurre.
+ *
+ * Desactivar Live (`isLive: false`) no tiene precondiciones: siempre es seguro
+ * volver a Test.
+ */
+export async function setOrgMode(orgId: string, isLive: boolean): Promise<ActionResult<{ isLive: boolean }>> {
+  try {
+    const { id_empresa, id_user } = await requireBillingAccess();
+
+    const parsed = SetOrgModeSchema.safeParse({ orgId, isLive });
+    if (!parsed.success) {
+      return { ok: false, message: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+    }
+    const uid = parsed.data.orgId;
+    const nextIsLive = parsed.data.isLive;
+
+    const localRecord = await assertOwnedOrganization(uid, id_empresa);
+
+    if (nextIsLive) {
+      if (!localRecord.hasLiveKey) {
+        return {
+          ok: false,
+          message:
+            "No se puede activar el modo Live: no hay una clave Live configurada. Renuévala desde Configuración.",
+        };
+      }
+      const remoteOrganization = await getRootClient().organizations.retrieve(uid);
+      if (!remoteOrganization.certificate?.has_certificate) {
+        return {
+          ok: false,
+          message:
+            "No se puede activar el modo Live: falta el certificado de sello digital (CSD). Súbelo desde Configuración.",
+        };
+      }
+    }
+
+    await db.transaction(async (tx) => {
+      await setLiveMode(tx, uid, id_empresa, nextIsLive);
+      await writeAuditEntry(tx, {
+        id_empresa,
+        id_user,
+        action: nextIsLive ? "mode.set_live" : "mode.set_test",
+        org_uid: uid,
+        mode: nextIsLive ? "live" : "test",
+      });
+    });
+
+    // `type: "layout"` porque el indicador de modo Live vive en `[id]/layout.tsx`
+    // y debe reflejarse en las cinco pestañas de la organización, no solo en una.
+    revalidatePath(`/dashboard/facturacion/${uid}`, "layout");
+    return { ok: true, data: { isLive: nextIsLive } };
   } catch (err) {
     return { ok: false, message: toUserMessage(err) };
   }

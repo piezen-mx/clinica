@@ -309,9 +309,9 @@ export async function setLiveKey(
 }
 
 /**
- * Cambia el modo de operación (`is_live`). No se expone en ninguna action de este
- * spec — `setOrgMode` llega en el spec 30 con confirmación y precondiciones — pero
- * el repositorio nace completo para no reabrir este archivo entonces.
+ * Cambia el modo de operación (`is_live`). Se expone a través de `setOrgMode`
+ * (spec 30), que valida las precondiciones (CSD + `live_key`) antes de llamar
+ * a esta función — aquí solo se escribe la columna.
  */
 export async function setLiveMode(
   client: ITransactionClient,
@@ -368,7 +368,13 @@ export type BillingAuditAction =
   | "customer.create"
   | "customer.update"
   | "product.create"
-  | "product.update";
+  | "product.update"
+  | "mode.set_live"
+  | "mode.set_test"
+  | "invoice.create"
+  | "invoice.cancel"
+  | "invoice.email"
+  | "invoice.pdf";
 
 export interface INewAuditEntry {
   id_empresa: number;
