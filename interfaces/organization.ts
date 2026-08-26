@@ -76,3 +76,23 @@ export interface ISatProductSuggestion {
   key:         string;
   description: string;
 }
+
+/** Renglón de una factura en el formulario de captura (spec 30). */
+export interface IInvoiceLineInput {
+  product_id: string;   // id del producto en Facturapi
+  quantity:   number;   // validado: nunca NaN, > 0
+}
+
+/** Datos de captura de una factura de ingreso (spec 30). */
+export interface ICreateInvoiceInput {
+  customer_id:    string;
+  lines:          IInvoiceLineInput[];
+  payment_form:   string;   // clave SAT
+  payment_method: string;   // "PUE" | "PPD"
+  use:            string;   // uso del CFDI
+  series:         string | null;
+  folio_number:   number | null;   // validado: nunca NaN
+}
+
+/** Motivos de cancelación admitidos por el SAT (spec 30). */
+export type InvoiceCancellationMotive = "01" | "02" | "03" | "04";
