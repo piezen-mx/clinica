@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** Spec 28 (`BILLING.organizations`, `BILLING.audit_log`, `lib/billing/facturapiClient.ts`,
   `lib/billing/organizationsRepository.ts`, `lib/billing/schemas.ts`, `lib/billing/errors.ts`,
   `lib/auth/session.ts`, `/dashboard/facturacion/[id]` con `OrgTabs`). No modifica base de datos.
@@ -210,27 +210,27 @@ Con Facturapi en **modo Test**, sobre una organización creada en el spec 28:
 
 ## Criterios de aceptación
 
-- [ ] Las pestañas Clientes y Productos aparecen en `OrgTabs` y funcionan; listar, buscar, crear y editar
+- [x] Las pestañas Clientes y Productos aparecen en `OrgTabs` y funcionan; listar, buscar, crear y editar
       operan contra Facturapi.
-- [ ] No existe ningún `getOrgClient` local en `customers/actions.ts` ni en `products/actions.ts`: ambos
+- [x] No existe ningún `getOrgClient` local en `customers/actions.ts` ni en `products/actions.ts`: ambos
       usan el de `lib/billing/facturapiClient.ts`, sin parámetro `mode`.
-- [ ] No queda ningún `new Facturapi(...)` en las páginas de clientes ni de productos (el original lo hace
+- [x] No queda ningún `new Facturapi(...)` en las páginas de clientes ni de productos (el original lo hace
       inline en `customers/page.tsx:13` y `products/page.tsx:13`).
-- [ ] Toda action y el route handler abren con `requireBillingAccess()` y un `safeParse` de `zod`.
-- [ ] No queda ningún `parseFloat`/`parseInt` sin validar: el precio pasa por `ProductSchema` y un valor no
+- [x] Toda action y el route handler abren con `requireBillingAccess()` y un `safeParse` de `zod`.
+- [x] No queda ningún `parseFloat`/`parseInt` sin validar: el precio pasa por `ProductSchema` y un valor no
       numérico se rechaza antes de llamar a Facturapi.
-- [ ] `GET /api/facturacion/catalogs/products` responde `401` sin sesión y falla con el `orgId` de una
+- [x] `GET /api/facturacion/catalogs/products` responde `401` sin sesión y falla con el `orgId` de una
       organización de otra empresa; exige `q` de al menos 2 caracteres del lado del servidor.
-- [ ] `ProductFormModal` apunta a `/api/facturacion/catalogs/products`, no a la ruta del proyecto original.
-- [ ] Ningún error crudo de Facturapi llega al cliente ni al cuerpo de una respuesta HTTP; todos pasan por
+- [x] `ProductFormModal` apunta a `/api/facturacion/catalogs/products`, no a la ruta del proyecto original.
+- [x] Ningún error crudo de Facturapi llega al cliente ni al cuerpo de una respuesta HTTP; todos pasan por
       `toUserMessage`.
-- [ ] Las altas y ediciones de cliente y producto quedan registradas en `BILLING.audit_log`.
-- [ ] Ningún archivo importa `@/components/ui/*` ni `cn`; la UI usa las clases del repo y se ve consistente
+- [x] Las altas y ediciones de cliente y producto quedan registradas en `BILLING.audit_log`.
+- [x] Ningún archivo importa `@/components/ui/*` ni `cn`; la UI usa las clases del repo y se ve consistente
       en claro y oscuro.
-- [ ] `"use client"` solo en los componentes que necesitan interactividad; las páginas son Server
+- [x] `"use client"` solo en los componentes que necesitan interactividad; las páginas son Server
       Components.
-- [ ] No se creó ninguna tabla local para clientes ni productos.
-- [ ] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
+- [x] No se creó ninguna tabla local para clientes ni productos.
+- [x] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
 
 ## Decisiones tomadas y descartadas
 
