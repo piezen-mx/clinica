@@ -63,6 +63,65 @@ async function assertOwnedOrganization(uid: string, idEmpresa: number) {
 }
 
 // ---------------------------------------------------------------------------
+// Detalle
+// ---------------------------------------------------------------------------
+
+/** Datos combinados para la pestaña General: legales frescos de Facturapi + estado local de las claves. */
+export interface IOrganizationDetail {
+  organization: Organization;
+  hasTestKey: boolean;
+  hasLiveKey: boolean;
+  isLive: boolean;
+}
+
+/**
+ * El detalle siempre lee de Facturapi con `organizations.retrieve` — la copia local
+ * es solo para el listado. Así el detalle nunca muestra datos desincronizados si
+ * alguien edita la organización directamente desde el panel de Facturapi.
+ */
+export async function getOrganizationDetail(orgId: string): Promise<ActionResult<IOrganizationDetail>> {
+  try {
+    const { id_empresa } = await requireBillingAccess();
+
+    const orgIdCheck = OrgIdSchema.safeParse(orgId);
+    if (!orgIdCheck.success) return { ok: false, message: orgIdCheck.error.issues[0].message };
+    const uid = orgIdCheck.data;
+
+    const localRecord = await assertOwnedOrganization(uid, id_empresa);
+    const organization = await getRootClient().organizations.retrieve(uid);
+
+    return {
+      ok: true,
+      data: {
+        organization,
+        hasTestKey: localRecord.hasTestKey,
+        hasLiveKey: localRecord.hasLiveKey,
+        isLive: localRecord.is_live,
+      },
+    };
+  } catch (err) {
+    return { ok: false, message: toUserMessage(err) };
+  }
+}
+
+/** Metadata de las claves Live activas (id, `first_12`, fecha) — nunca la clave completa. */
+export async function listLiveApiKeys(orgId: string): Promise<ActionResult<ApiKeys[]>> {
+  try {
+    const { id_empresa } = await requireBillingAccess();
+
+    const orgIdCheck = OrgIdSchema.safeParse(orgId);
+    if (!orgIdCheck.success) return { ok: false, message: orgIdCheck.error.issues[0].message };
+    const uid = orgIdCheck.data;
+    await assertOwnedOrganization(uid, id_empresa);
+
+    const keys = await getRootClient().organizations.listLiveApiKeys(uid);
+    return { ok: true, data: keys };
+  } catch (err) {
+    return { ok: false, message: toUserMessage(err) };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Listado
 // ---------------------------------------------------------------------------
 
