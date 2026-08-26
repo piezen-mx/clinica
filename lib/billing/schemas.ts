@@ -138,3 +138,83 @@ export const UploadCertificateSchema = z
   });
 
 export type UploadCertificateInput = z.infer<typeof UploadCertificateSchema>;
+
+// ---------------------------------------------------------------------------
+// Clientes y productos (spec 29)
+// ---------------------------------------------------------------------------
+
+const RFC_REGEX = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/;
+
+/**
+ * `NaN` es lo que llega a Facturapi cuando el original hace `parseFloat(data.price)`
+ * sin verificar (`products.ts:33,58`) — el precio queda mal solo hasta que Facturapi
+ * lo rechaza con un mensaje opaco. Este parser corta eso antes de la llamada:
+ * acepta string o number, normaliza la coma decimal ("1234,50" → "1234.50") o de
+ * miles ("1,234.50" → "1234.50" — si ya hay un punto, la coma solo puede ser de
+ * miles), y falla ante `NaN`, negativos e infinitos.
+ */
+function normalizeMoneyString(raw: string): string {
+  const trimmed = raw.trim();
+  if (trimmed.includes(",") && trimmed.includes(".")) return trimmed.replace(/,/g, "");
+  if (trimmed.includes(",")) return trimmed.replace(",", ".");
+  return trimmed;
+}
+
+function money(label: string) {
+  return z.union([z.string(), z.number()]).transform((raw, ctx) => {
+    const value = typeof raw === "number" ? raw : Number(normalizeMoneyString(raw));
+    if (!Number.isFinite(value) || value < 0) {
+      ctx.addIssue({ code: "custom", message: `${label} debe ser un número válido, mayor o igual a cero` });
+      return z.NEVER;
+    }
+    return value;
+  });
+}
+
+/** Datos de un cliente de Facturapi (`ICustomerFormInput`). Valida formato de RFC y correo. */
+export const CustomerSchema = z.object({
+  legal_name: requiredText("La razón social"),
+  tax_id: requiredText("El RFC", 13)
+    .transform((value) => value.toUpperCase())
+    .pipe(z.string().regex(RFC_REGEX, "El RFC no tiene un formato válido")),
+  tax_system: requiredText("El régimen fiscal", 10).regex(
+    TAX_SYSTEM_REGEX,
+    "El régimen fiscal debe ser el código SAT de 3 dígitos"
+  ),
+  email: requiredText("El correo", 255).pipe(z.string().email("El correo no es válido")),
+  phone: optionalText(50),
+  street: optionalText(255),
+  exterior: optionalText(50),
+  interior: optionalText(50),
+  neighborhood: optionalText(255),
+  zip: requiredText("El código postal", 10).regex(ZIP_REGEX, "El código postal debe tener 5 dígitos"),
+  city: optionalText(255),
+  municipality: optionalText(255),
+  state: optionalText(255),
+  country: optionalText(10),
+});
+
+export type CustomerInput = z.infer<typeof CustomerSchema>;
+
+/** Datos de un producto de Facturapi (`IProductFormInput`). El precio nunca llega como `NaN`. */
+export const ProductSchema = z.object({
+  description: requiredText("La descripción"),
+  product_key: requiredText("La clave del catálogo SAT", 20),
+  unit_key: requiredText("La clave de unidad SAT", 20),
+  price: money("El precio"),
+  tax_included: z.boolean(),
+});
+
+export type ProductInput = z.infer<typeof ProductSchema>;
+
+/**
+ * `orgId` y `q` del buscador del catálogo SAT. El mínimo de 2 caracteres se exige
+ * aquí —del lado del servidor— y no solo en el cliente (`ProductFormModal.tsx:97`
+ * del original), porque el route handler es alcanzable directamente por `fetch`.
+ */
+export const SatCatalogQuerySchema = z.object({
+  orgId: requiredText("El identificador de la organización", 255),
+  q: z.string().trim().min(2, "La búsqueda requiere al menos 2 caracteres").max(255),
+});
+
+export type SatCatalogQueryInput = z.infer<typeof SatCatalogQuerySchema>;
