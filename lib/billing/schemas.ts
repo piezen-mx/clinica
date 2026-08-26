@@ -15,12 +15,19 @@ function requiredText(label: string, max = 255) {
   return z.string().trim().min(1, `${label} es requerido`).max(max, `${label} es demasiado largo`);
 }
 
-/** Campo opcional: cadena vacía o ausente se normaliza a `null` (mismo shape que la BD). */
+/**
+ * Campo opcional: cadena vacía, ausente **o `null`** se normaliza a `null` (mismo shape
+ * que la BD). Acepta `null` explícito además de `undefined` porque los formularios de
+ * cliente/producto (spec 29) tipan sus campos opcionales como `string | null`
+ * (`ICustomerFormInput`) y mandan `null`, a diferencia de los `FormData` de organización
+ * (spec 28), que siempre mandan cadena vacía.
+ */
 function optionalText(max = 255) {
   return z
     .string()
     .trim()
     .max(max)
+    .nullable()
     .optional()
     .transform((value) => (value && value.length > 0 ? value : null));
 }
