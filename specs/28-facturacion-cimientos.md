@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** `app/actions/auth.ts` (`getMeAction`, `ActionResult<T>`, `IAuthUser`),
   `database/connection.ts` (`queryParams`, `transaction`), `proxy.ts` (guarda de rol, patrón de
   `/dashboard/usuarios` y `/dashboard/empleados`), `app/dashboard/componentes/navConfig.tsx`,
@@ -507,51 +507,51 @@ Todo contra Facturapi en **modo Test** (no genera CFDI reales):
 
 ## Criterios de aceptación
 
-- [ ] Existen en BD el esquema `BILLING` y las tablas `[BILLING].[organizations]` (con `UNIQUE` sobre
+- [x] Existen en BD el esquema `BILLING` y las tablas `[BILLING].[organizations]` (con `UNIQUE` sobre
       `uid`, `id_empresa` `NOT NULL`, `IDENTITY` e índice por `id_empresa`) y `[BILLING].[audit_log]`; el
       DDL está en `queries.txt` bajo el separador `FACTURACION (FACTURAPI)`.
-- [ ] Ninguna tabla del módulo quedó en `dbo`; todas las consultas del repositorio califican el esquema
+- [x] Ninguna tabla del módulo quedó en `dbo`; todas las consultas del repositorio califican el esquema
       como `[CentroPodologico].[BILLING].[…]`.
-- [ ] No queda ningún import de `drizzle-orm`, `@/lib/db` ni `@/lib/schema`; tampoco se agregaron
+- [x] No queda ningún import de `drizzle-orm`, `@/lib/db` ni `@/lib/schema`; tampoco se agregaron
       `drizzle-orm`, `drizzle-kit` ni `mysql2` a `package.json`.
-- [ ] Todo el SQL del módulo vive en `lib/billing/organizationsRepository.ts` y usa `queryParams` con
+- [x] Todo el SQL del módulo vive en `lib/billing/organizationsRepository.ts` y usa `queryParams` con
       parámetros `@nombre`; ningún `actions.ts` arma SQL por su cuenta.
-- [ ] `created_at`/`updated_at` se escriben con `buildDate(new Date())` y se leen con
+- [x] `created_at`/`updated_at` se escriben con `buildDate(new Date())` y se leen con
       `CONVERT(varchar(19), [col], 120)`; ninguna fecha viaja como objeto `Date`.
-- [ ] `SELECT test_key FROM [BILLING].[organizations]` devuelve texto que empieza con `v1:`, no una clave
+- [x] `SELECT test_key FROM [BILLING].[organizations]` devuelve texto que empieza con `v1:`, no una clave
       de Facturapi legible.
-- [ ] **Ninguna server action, route handler, página ni componente del módulo devuelve o renderiza
+- [x] **Ninguna server action, route handler, página ni componente del módulo devuelve o renderiza
       `test_key` o `live_key`.** La UI muestra a lo sumo `first_12`. Verificable con
       `grep -rn "test_key\|live_key" app/` sin resultados.
-- [ ] `getRootClient()` y la clave de cifrado son perezosos: con `FACTURAPI_USER_KEY` o
+- [x] `getRootClient()` y la clave de cifrado son perezosos: con `FACTURAPI_USER_KEY` o
       `BILLING_ENCRYPTION_KEY` sin definir, `npm run dev` levanta y el resto del dashboard funciona.
-- [ ] Existe un único `getOrgClient` (en `lib/billing/facturapiClient.ts`), **sin parámetro `mode`**; no
+- [x] Existe un único `getOrgClient` (en `lib/billing/facturapiClient.ts`), **sin parámetro `mode`**; no
       queda ningún `new Facturapi(...)` suelto en páginas, actions o route handlers.
-- [ ] Toda server action del módulo abre con `requireBillingAccess()` y con un `safeParse` de `zod`; no
+- [x] Toda server action del módulo abre con `requireBillingAccess()` y con un `safeParse` de `zod`; no
       queda ningún cast `as string` / `as File` sobre `FormData` ni ningún `parseFloat`/`parseInt` sin
       validar.
-- [ ] El `id_empresa` nunca llega desde el cliente; el listado muestra solo las organizaciones de la
+- [x] El `id_empresa` nunca llega desde el cliente; el listado muestra solo las organizaciones de la
       empresa del usuario, y entrar por URL directa al `uid` de una organización de otra empresa falla.
-- [ ] Ningún error crudo de Facturapi llega al cliente: todos pasan por `toUserMessage`, y el error
+- [x] Ningún error crudo de Facturapi llega al cliente: todos pasan por `toUserMessage`, y el error
       completo queda en el log del servidor.
-- [ ] Cada operación del catálogo (`org.*`, `cert.*`, `key.*`) deja un registro en `BILLING.audit_log` con
+- [x] Cada operación del catálogo (`org.*`, `cert.*`, `key.*`) deja un registro en `BILLING.audit_log` con
       `id_user` e `id_empresa`, y `detail` no contiene claves ni la contraseña del CSD.
-- [ ] La contraseña del CSD no se persiste, no se registra en bitácora y no aparece en ningún log.
-- [ ] `proxy.ts` redirige a `id_role` 2, 3 y 5 fuera de `/dashboard/facturacion`, y la entrada del sidebar
+- [x] La contraseña del CSD no se persiste, no se registra en bitácora y no aparece en ningún log.
+- [x] `proxy.ts` redirige a `id_role` 2, 3 y 5 fuera de `/dashboard/facturacion`, y la entrada del sidebar
       tiene `excludeRoles: [2, 3, 5]`, coherente con esa guarda.
-- [ ] Eliminar una organización borra tanto en Facturapi como la fila local (no quedan filas huérfanas).
-- [ ] Revocar una clave Live cuando existen varias deja `live_key` limpia si la revocada era la almacenada.
-- [ ] No existe `app/api/facturacion/admin/migrate-orgs` ni la variable `MIGRATE_SECRET`.
-- [ ] No queda ningún `console.log` de datos de organizaciones.
-- [ ] Ningún archivo del módulo importa `@/components/ui/*` ni `cn`; los modales destructivos reusan
+- [x] Eliminar una organización borra tanto en Facturapi como la fila local (no quedan filas huérfanas).
+- [x] Revocar una clave Live cuando existen varias deja `live_key` limpia si la revocada era la almacenada.
+- [x] No existe `app/api/facturacion/admin/migrate-orgs` ni la variable `MIGRATE_SECRET`.
+- [x] No queda ningún `console.log` de datos de organizaciones.
+- [x] Ningún archivo del módulo importa `@/components/ui/*` ni `cn`; los modales destructivos reusan
       `ConfirmModal`.
-- [ ] La navegación interna de la organización es una tira de pestañas horizontal, no un segundo sidebar,
+- [x] La navegación interna de la organización es una tira de pestañas horizontal, no un segundo sidebar,
       y ninguna página del módulo renderiza `min-h-screen` ni un `<header>` full-width propio.
-- [ ] `"use client"` aparece solo en los componentes que realmente necesitan interactividad; las páginas y
+- [x] `"use client"` aparece solo en los componentes que realmente necesitan interactividad; las páginas y
       las secciones de solo lectura son Server Components.
-- [ ] `is_live` sigue en `0` en todas las filas y no existe UI para cambiarlo (llega en el spec 30).
-- [ ] Existe `docs/facturacion.md` y está referenciado desde `CLAUDE.md`.
-- [ ] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
+- [x] `is_live` sigue en `0` en todas las filas y no existe UI para cambiarlo (llega en el spec 30).
+- [x] Existe `docs/facturacion.md` y está referenciado desde `CLAUDE.md`.
+- [x] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
 
 ## Decisiones tomadas y descartadas
 
