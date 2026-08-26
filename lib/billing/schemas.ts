@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { CancellationMotive, InvoiceUse, PaymentForm, PaymentMethod } from "facturapi";
 
 /**
  * Schemas `zod` de toda entrada del módulo de facturación. Una frontera `'use server'`
@@ -225,3 +226,100 @@ export const SatCatalogQuerySchema = z.object({
 });
 
 export type SatCatalogQueryInput = z.infer<typeof SatCatalogQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Facturas y modo Live (spec 30)
+// ---------------------------------------------------------------------------
+
+/**
+ * Cantidad de un renglón: reutiliza `money()` (nunca `NaN`, nunca negativa) y además
+ * exige `> 0` — a diferencia de un precio, una cantidad de cero no tiene sentido en
+ * un renglón de factura.
+ */
+function quantity(label: string) {
+  return money(label).refine((value) => value > 0, {
+    message: `${label} debe ser mayor a cero`,
+  });
+}
+
+/**
+ * Cada catálogo cerrado del SAT (forma de pago, método de pago, uso del CFDI, motivo
+ * de cancelación) valida contra el enum que ya expone el SDK de Facturapi, en vez de
+ * duplicar los catálogos como listas de strings sueltas.
+ */
+function satCatalog<T extends Record<string, string>>(catalog: T, label: string) {
+  return z.enum(catalog, { error: () => `${label} no es una clave válida del SAT` });
+}
+
+const InvoiceLineSchema = z.object({
+  product_id: requiredText("El producto", 255),
+  quantity: quantity("La cantidad"),
+});
+
+/**
+ * Datos de captura de una factura de ingreso (`ICreateInvoiceInput`). **No incluye
+ * un campo `mode`** — el modo se resuelve siempre en el servidor a partir de
+ * `is_live` (ver `getOrgClient`), nunca a partir de algo que mande el cliente.
+ */
+export const CreateInvoiceSchema = z.object({
+  customer_id: requiredText("El cliente", 255),
+  lines: z.array(InvoiceLineSchema).min(1, "La factura debe tener al menos un renglón"),
+  payment_form: satCatalog(PaymentForm, "La forma de pago"),
+  payment_method: satCatalog(PaymentMethod, "El método de pago"),
+  use: satCatalog(InvoiceUse, "El uso del CFDI"),
+  series: optionalText(20),
+  folio_number: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .optional()
+    .transform((raw, ctx) => {
+      if (raw === null || raw === undefined || raw === "") return null;
+      const value = typeof raw === "number" ? raw : Number(raw);
+      if (!Number.isFinite(value) || !Number.isInteger(value) || value <= 0) {
+        ctx.addIssue({ code: "custom", message: "El folio debe ser un número entero mayor a cero" });
+        return z.NEVER;
+      }
+      return value;
+    }),
+});
+
+export type CreateInvoiceInput = z.infer<typeof CreateInvoiceSchema>;
+
+/**
+ * Motivo de cancelación restringido al catálogo del SAT (`01`-`04`), no a una cadena
+ * libre — a diferencia del original, que acepta cualquier texto.
+ */
+export const CancelInvoiceSchema = z.object({
+  invoiceId: requiredText("La factura", 255),
+  motive: satCatalog(CancellationMotive, "El motivo de cancelación"),
+});
+
+export type CancelInvoiceInput = z.infer<typeof CancelInvoiceSchema>;
+
+/**
+ * Solo el identificador de la factura a enviar. **Deliberadamente sin campo de
+ * correo**: la acción envía siempre al correo registrado del cliente del
+ * comprobante (ver Decisiones tomadas, spec 30) — aceptar un destinatario del
+ * cliente es lo que este schema existe para impedir.
+ */
+export const SendInvoiceEmailSchema = z.object({
+  invoiceId: requiredText("La factura", 255),
+});
+
+export type SendInvoiceEmailInput = z.infer<typeof SendInvoiceEmailSchema>;
+
+/** Activar/desactivar el modo Live de una organización. */
+export const SetOrgModeSchema = z.object({
+  orgId: requiredText("El identificador de la organización", 255),
+  isLive: z.boolean(),
+});
+
+export type SetOrgModeInput = z.infer<typeof SetOrgModeSchema>;
+
+/** Parámetros de ruta del route handler del PDF. */
+export const InvoicePdfParamsSchema = z.object({
+  orgId: requiredText("El identificador de la organización", 255),
+  invoiceId: requiredText("La factura", 255),
+});
+
+export type InvoicePdfParamsInput = z.infer<typeof InvoicePdfParamsSchema>;
