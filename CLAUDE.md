@@ -67,6 +67,7 @@ The sections below used to live inline here but are long and only relevant when 
 - Attendance / biometric checadores (ZKTeco ADMS webhook, `app/api/asistencias/iclock/*`): `docs/asistencias-biometricas.md`
 - Inventory (productos, proveedores, pedidos, recepciones, movimientos, conteos): `docs/inventario.md`
 - Google Calendar integration internals (service account JWT, PKCS conversion, env vars): `docs/google-calendar.md`
+- Billing / electronic invoicing (Facturapi, `BILLING` schema, API key encryption, audit log): `docs/facturacion.md`
 
 ### Date/time handling (critical, mssql-specific)
 
