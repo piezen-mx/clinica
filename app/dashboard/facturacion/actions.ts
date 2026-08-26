@@ -159,11 +159,15 @@ export async function createOrganization(input: unknown): Promise<ActionResult<O
     }
     const data = parsed.data;
 
-    const org = await getRootClient().organizations.create({
-      legal: {
+    // Facturapi v2 solo acepta `name` al crear; el resto de los datos legales se
+    // fija en un segundo paso con `updateLegal` (ver nota en CreateOrganizationSchema:
+    // `tax_id`/`country` no pueden fijarse por organización, quedan a cargo de la cuenta).
+    const created = await getRootClient().organizations.create({ name: data.name });
+
+    try {
+      const org = await getRootClient().organizations.updateLegal(created.id, {
         name: data.name,
         legal_name: data.legal_name,
-        tax_id: data.tax_id,
         tax_system: data.tax_system,
         address: {
           street: data.street,
@@ -173,46 +177,55 @@ export async function createOrganization(input: unknown): Promise<ActionResult<O
           city: data.city,
           municipality: data.municipality,
           state: data.state,
-          country: data.country,
         },
-      },
-    });
-
-    const testKey = await getRootClient().organizations.getTestApiKey(org.id);
-
-    await db.transaction(async (tx) => {
-      await insertOrganization(tx, {
-        uid: org.id,
-        id_empresa,
-        testKey,
-        name: org.legal.name,
-        legal_name: org.legal.legal_name,
-        tax_id: org.legal.tax_id,
-        tax_system: org.legal.tax_system,
-        phone: org.legal.phone ?? null,
-        website: org.legal.website ?? null,
-        support_email: org.legal.support_email ?? null,
-        street: org.legal.address.street ?? null,
-        exterior: org.legal.address.exterior ?? null,
-        interior: org.legal.address.interior ?? null,
-        neighborhood: org.legal.address.neighborhood ?? null,
-        zip: org.legal.address.zip ?? null,
-        city: org.legal.address.city ?? null,
-        municipality: org.legal.address.municipality ?? null,
-        state: org.legal.address.state ?? null,
-        country: org.legal.address.country ?? null,
       });
-      await writeAuditEntry(tx, {
-        id_empresa,
-        id_user,
-        action: "org.create",
-        org_uid: org.id,
-        mode: "test",
-      });
-    });
 
-    revalidatePath("/dashboard/facturacion");
-    return { ok: true, data: org };
+      const testKey = await getRootClient().organizations.getTestApiKey(org.id);
+
+      await db.transaction(async (tx) => {
+        await insertOrganization(tx, {
+          uid: org.id,
+          id_empresa,
+          testKey,
+          name: org.legal.name,
+          legal_name: org.legal.legal_name,
+          tax_id: org.legal.tax_id,
+          tax_system: org.legal.tax_system,
+          phone: org.legal.phone ?? null,
+          website: org.legal.website ?? null,
+          support_email: org.legal.support_email ?? null,
+          street: org.legal.address.street ?? null,
+          exterior: org.legal.address.exterior ?? null,
+          interior: org.legal.address.interior ?? null,
+          neighborhood: org.legal.address.neighborhood ?? null,
+          zip: org.legal.address.zip ?? null,
+          city: org.legal.address.city ?? null,
+          municipality: org.legal.address.municipality ?? null,
+          state: org.legal.address.state ?? null,
+          country: org.legal.address.country ?? null,
+        });
+        await writeAuditEntry(tx, {
+          id_empresa,
+          id_user,
+          action: "org.create",
+          org_uid: org.id,
+          mode: "test",
+        });
+      });
+
+      revalidatePath("/dashboard/facturacion");
+      return { ok: true, data: org };
+    } catch (stepError) {
+      // El `create({ name })` inicial ya dejó una organización real en Facturapi; si
+      // cualquier paso posterior falla, hay que borrarla para no dejarla huérfana
+      // (visible en Facturapi pero sin fila local ni datos legales).
+      try {
+        await getRootClient().organizations.del(created.id);
+      } catch (cleanupError) {
+        console.error("[billing] No se pudo revertir la organización huérfana", created.id, cleanupError);
+      }
+      throw stepError;
+    }
   } catch (err) {
     return { ok: false, message: toUserMessage(err) };
   }
@@ -240,10 +253,11 @@ export async function updateOrganizationLegal(
     }
     const data = parsed.data;
 
+    // Sin `tax_id` ni `address.country`: Facturapi v2 los rechaza en `updateLegal`
+    // (ver nota en CreateOrganizationSchema) — quedan fijos a los de la cuenta.
     const org = await getRootClient().organizations.updateLegal(uid, {
       name: data.name,
       legal_name: data.legal_name,
-      tax_id: data.tax_id,
       tax_system: data.tax_system,
       phone: data.phone,
       website: data.website,
@@ -257,12 +271,17 @@ export async function updateOrganizationLegal(
         city: data.city,
         municipality: data.municipality,
         state: data.state,
-        country: data.country,
       },
     });
 
+    // `tax_id`/`country` no vienen del formulario (ver arriba): se toman de la respuesta
+    // de Facturapi, que es la autoridad sobre esos dos campos.
     await db.transaction(async (tx) => {
-      await updateOrganizationLegalRecord(tx, uid, id_empresa, data);
+      await updateOrganizationLegalRecord(tx, uid, id_empresa, {
+        ...data,
+        tax_id: org.legal.tax_id,
+        country: org.legal.address.country,
+      });
       await writeAuditEntry(tx, {
         id_empresa,
         id_user,

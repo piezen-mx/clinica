@@ -8,9 +8,7 @@ import { z } from "zod";
  * `FormData`, que es exactamente lo que este módulo no puede permitirse (spec 28).
  */
 
-const RFC_REGEX = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/i;
 const ZIP_REGEX = /^\d{5}$/;
-const COUNTRY_REGEX = /^[A-Z]{3}$/i;
 const TAX_SYSTEM_REGEX = /^\d{3}$/;
 
 function requiredText(label: string, max = 255) {
@@ -39,11 +37,20 @@ function optionalEmail() {
     });
 }
 
-/** Datos legales + dirección requeridos para crear una organización en Facturapi. */
+/**
+ * Datos legales + dirección requeridos para crear una organización en Facturapi.
+ *
+ * **No incluye `tax_id` ni `country`.** Facturapi v2 (la única versión activa; v1 fue
+ * retirada en abril de 2023) no acepta ninguno de los dos ni al crear ni al editar una
+ * organización — quedan fijos al RFC y país de la cuenta dueña de la API key. Una
+ * organización en Facturapi v2 es más una sub-marca de la misma razón social que una
+ * entidad fiscal independiente. `tax_id`/`country` siguen existiendo como columnas de
+ * solo lectura en `BILLING.organizations` (reflejan lo que Facturapi realmente asigna),
+ * pero no se piden en el formulario ni se envían en el `create`/`updateLegal`.
+ */
 export const CreateOrganizationSchema = z.object({
   name: requiredText("El nombre comercial"),
   legal_name: requiredText("La razón social"),
-  tax_id: requiredText("El RFC").regex(RFC_REGEX, "El RFC no tiene un formato válido"),
   tax_system: requiredText("El régimen fiscal", 10).regex(
     TAX_SYSTEM_REGEX,
     "El régimen fiscal debe ser el código SAT de 3 dígitos"
@@ -55,10 +62,6 @@ export const CreateOrganizationSchema = z.object({
   city: requiredText("La ciudad"),
   municipality: requiredText("El municipio"),
   state: requiredText("El estado"),
-  country: requiredText("El país", 10).regex(
-    COUNTRY_REGEX,
-    "El país debe ser un código de 3 letras (ej. MEX)"
-  ),
 });
 
 export type CreateOrganizationInput = z.infer<typeof CreateOrganizationSchema>;

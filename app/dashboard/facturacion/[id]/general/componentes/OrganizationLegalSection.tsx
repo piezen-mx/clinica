@@ -15,7 +15,6 @@ interface Props {
 interface FormState {
   name: string;
   legal_name: string;
-  tax_id: string;
   tax_system: string;
   phone: string;
   website: string;
@@ -28,15 +27,14 @@ interface FormState {
   city: string;
   municipality: string;
   state: string;
-  country: string;
 }
 
+/** `tax_id`/`country` no son editables (ver nota en `CreateOrganizationSchema`) y se omiten aquí. */
 function organizationToForm(organization: Organization): FormState {
   const { legal } = organization;
   return {
     name: legal.name ?? "",
     legal_name: legal.legal_name ?? "",
-    tax_id: legal.tax_id ?? "",
     tax_system: legal.tax_system ?? "",
     phone: legal.phone ?? "",
     website: legal.website ?? "",
@@ -49,7 +47,6 @@ function organizationToForm(organization: Organization): FormState {
     city: legal.address.city ?? "",
     municipality: legal.address.municipality ?? "",
     state: legal.address.state ?? "",
-    country: legal.address.country ?? "",
   };
 }
 
@@ -172,10 +169,6 @@ export default function OrganizationLegalSection({ orgId, organization }: Props)
           <input type="text" name="legal_name" value={form.legal_name} onChange={handleChange} required className={inputClass} />
         </label>
         <label className="flex flex-col gap-1">
-          <span className={labelClass}>RFC *</span>
-          <input type="text" name="tax_id" value={form.tax_id} onChange={handleChange} required className={`${inputClass} uppercase`} />
-        </label>
-        <label className="flex flex-col gap-1">
           <span className={labelClass}>Régimen fiscal *</span>
           <select name="tax_system" value={form.tax_system} onChange={handleChange} required className={inputClass}>
             <option value="">Seleccione…</option>
@@ -233,11 +226,12 @@ export default function OrganizationLegalSection({ orgId, organization }: Props)
           <span className={labelClass}>Estado *</span>
           <input type="text" name="state" value={form.state} onChange={handleChange} required className={inputClass} />
         </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>País *</span>
-          <input type="text" name="country" value={form.country} onChange={handleChange} required maxLength={3} className={`${inputClass} uppercase`} />
-        </label>
       </div>
+
+      <p className="text-xs text-[#44474f] dark:text-zinc-500">
+        El RFC y el país quedan fijos a los de la cuenta de facturación de la empresa —
+        Facturapi no permite editarlos por organización.
+      </p>
 
       <div className="flex justify-end gap-3 pt-2 border-t border-[#c4c6d0] dark:border-zinc-700">
         <button

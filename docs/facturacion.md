@@ -5,9 +5,22 @@
   (`factura`) across specs 28-31; spec 28 covers only the schema, shared infra, and the
   organizations listing + General tab. `docs/facturacion.md` grows with each spec.
 - Tenant scope: every read/write filters by `id_empresa` from the JWT, **not** by
-  `id_sucursal`. A Facturapi organization is a fiscal entity of the whole company — RFC, CSD
-  certificate, and folio series are unique per `legal_name`, not per branch. Don't "fix" this
-  by adding an `id_sucursal` filter later.
+  `id_sucursal`. A Facturapi organization is a fiscal entity of the whole company — the CSD
+  certificate and folio series are per organization, not per branch. Don't "fix" this by
+  adding an `id_sucursal` filter later.
+- **RFC and country are shared across every organization in the account, not unique per
+  organization.** Facturapi v2 (the only version still live — v1 was retired in April 2023)
+  rejects `tax_id` and `address.country` on both `organizations.create` and
+  `organizations.updateLegal`; they're fixed to the RFC/country of the account that owns the
+  `FACTURAPI_USER_KEY`. An "organization" here is closer to a sub-brand of one legal entity
+  than an independent taxpayer. `CreateOrganizationSchema` doesn't collect either field; the
+  UI shows them read-only, sourced from Facturapi's response, never from user input.
+- `createOrganization` is necessarily two Facturapi calls, not one: `organizations.create`
+  accepts only `{ name }` in v2 (nesting the payload under `legal`, like the original project
+  did, fails outright — `"El campo legal no está permitido"`); the rest of the legal data is
+  set right after with `organizations.updateLegal`. If that second call throws, the action
+  deletes the just-created organization to avoid leaving one behind in Facturapi with no
+  local row and no legal data.
 - Access: `/dashboard/facturacion` is gated to `id_role` 1 and 4 in `proxy.ts` (same criterion
   as `/dashboard/usuarios` and `/dashboard/empleados`); every server action also opens with
   `requireBillingAccess()` (`lib/auth/session.ts`) since the `proxy.ts` matcher doesn't cover
