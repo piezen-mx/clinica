@@ -9,14 +9,15 @@ interface Props {
 
 /**
  * Tira de pestañas horizontal (no un segundo sidebar), copiando
- * `app/dashboard/empleados/[id]/componentes/EmployeeTabs.tsx`. "General", "Clientes"
- * y "Productos" están habilitadas; Facturas y Personalización se agregan a este mismo
- * arreglo en los specs 30-31.
+ * `app/dashboard/empleados/[id]/componentes/EmployeeTabs.tsx`. "General", "Clientes",
+ * "Productos" y "Facturas" están habilitadas; Personalización se agrega a este mismo
+ * arreglo en el spec 31.
  */
 const TABS = (orgId: string) => [
   { href: `/dashboard/facturacion/${orgId}/general`, label: "General" },
   { href: `/dashboard/facturacion/${orgId}/customers`, label: "Clientes" },
   { href: `/dashboard/facturacion/${orgId}/products`, label: "Productos" },
+  { href: `/dashboard/facturacion/${orgId}/invoices`, label: "Facturas" },
 ];
 
 export default function OrgTabs({ orgId }: Props) {

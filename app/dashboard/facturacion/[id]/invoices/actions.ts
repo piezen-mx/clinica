@@ -57,6 +57,59 @@ async function resolveMode(uid: string, idEmpresa: number): Promise<"test" | "li
 }
 
 // ---------------------------------------------------------------------------
+// Listado y búsqueda
+// ---------------------------------------------------------------------------
+
+export interface IInvoiceListFilters {
+  /** "YYYY-MM". Requerido: sin acotar por mes, el único límite sería `limit: 50` — insuficiente para una organización con más facturas históricas (ver Riesgos, spec 30). */
+  month: string;
+  status?: string;
+  q?: string;
+}
+
+/**
+ * Rango `date[gte]`/`date[lte]` de un mes calendario, con la notación de
+ * corchetes que usa Facturapi para filtros de rango (igual que Stripe). Un mes
+ * inválido no filtra por fecha — el listado cae al comportamiento sin filtro en
+ * vez de fallar.
+ */
+function monthDateRange(month: string): Record<string, string> {
+  const [yearText, monthText] = month.split("-");
+  const year = Number(yearText);
+  const monthIndex = Number(monthText);
+  if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 1 || monthIndex > 12) {
+    return {};
+  }
+
+  const lastDay = new Date(year, monthIndex, 0).getDate();
+  return {
+    "date[gte]": `${month}-01`,
+    "date[lte]": `${month}-${String(lastDay).padStart(2, "0")}`,
+  };
+}
+
+/** Listado de facturas de la organización, acotado por mes, estatus y buscador. */
+export async function listInvoicesAction(
+  uid: string,
+  filters: IInvoiceListFilters
+): Promise<ActionResult<Invoice[]>> {
+  try {
+    const { id_empresa } = await requireBillingAccess();
+
+    const client = await getOrgClient(uid, id_empresa);
+    const params: Record<string, unknown> = { limit: 50, ...monthDateRange(filters.month) };
+    if (filters.status) params.status = filters.status;
+    const trimmedQuery = filters.q?.trim();
+    if (trimmedQuery) params.q = trimmedQuery;
+
+    const result = await client.invoices.list(params);
+    return { ok: true, data: result.data };
+  } catch (err) {
+    return { ok: false, message: toUserMessage(err) };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Alta
 // ---------------------------------------------------------------------------
 
