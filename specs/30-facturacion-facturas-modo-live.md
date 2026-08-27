@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** Spec 28 (`BILLING.organizations`, `BILLING.audit_log`, `getOrgClient` sin parámetro
   `mode`, `lib/billing/schemas.ts`, `lib/billing/errors.ts`, `lib/auth/session.ts`, `ConfirmModal`),
   Spec 29 (clientes y productos de la organización, que son los insumos de una factura). No modifica base
@@ -250,33 +250,33 @@ Se agrega la pestaña "Facturas" a `OrgTabs.tsx` (modificado).
 
 ## Criterios de aceptación
 
-- [ ] **Ninguna server action ni route handler del módulo acepta un parámetro `mode`.** Verificable
+- [x] **Ninguna server action ni route handler del módulo acepta un parámetro `mode`.** Verificable
       revisando las firmas exportadas de `invoices/actions.ts` y la ausencia de lectura de `?mode=` en las
       páginas.
-- [ ] El modo se deriva siempre de `is_live` en base de datos, dentro de `getOrgClient`. Escribir
+- [x] El modo se deriva siempre de `is_live` en base de datos, dentro de `getOrgClient`. Escribir
       `?mode=live` en cualquier URL del módulo no cambia el entorno con el que se opera.
-- [ ] Activar el modo Live exige confirmación explícita y falla si falta el certificado CSD o la
+- [x] Activar el modo Live exige confirmación explícita y falla si falta el certificado CSD o la
       `live_key`; `is_live` no cambia cuando falla.
-- [ ] Con `is_live = 1`, el indicador de modo Live es visible en las cinco pestañas de la organización, con
+- [x] Con `is_live = 1`, el indicador de modo Live es visible en las cinco pestañas de la organización, con
       color de error, no de éxito.
-- [ ] En modo Live, crear una factura exige una confirmación que muestra cliente, RFC receptor y total.
-- [ ] `sendInvoiceByEmailAction` no acepta un destinatario desde el cliente; la factura se envía al correo
+- [x] En modo Live, crear una factura exige una confirmación que muestra cliente, RFC receptor y total.
+- [x] `sendInvoiceByEmailAction` no acepta un destinatario desde el cliente; la factura se envía al correo
       registrado del cliente del comprobante.
-- [ ] `cancelInvoiceAction` solo acepta motivos del catálogo del SAT (`01`-`04`).
-- [ ] No queda ningún `parseFloat`/`parseInt` sin validar en el flujo de facturas; cantidades y precios
+- [x] `cancelInvoiceAction` solo acepta motivos del catálogo del SAT (`01`-`04`).
+- [x] No queda ningún `parseFloat`/`parseInt` sin validar en el flujo de facturas; cantidades y precios
       pasan por `money()` y se rechaza `NaN`, cero y negativos.
-- [ ] El route handler del PDF exige sesión (`401` sin ella), valida pertenencia por `id_empresa` y no lee
+- [x] El route handler del PDF exige sesión (`401` sin ella), valida pertenencia por `id_empresa` y no lee
       el modo del query string.
-- [ ] `invoice.create`, `invoice.cancel`, `invoice.email`, `invoice.pdf`, `mode.set_live` y `mode.set_test`
+- [x] `invoice.create`, `invoice.cancel`, `invoice.email`, `invoice.pdf`, `mode.set_live` y `mode.set_test`
       quedan en `BILLING.audit_log` con `id_user`, `id_empresa`, `mode` y folio; los de factura se escriben
       después de que Facturapi confirma.
-- [ ] Ningún error crudo de Facturapi llega al cliente ni al cuerpo de una respuesta HTTP.
-- [ ] Ningún `new Facturapi(...)` suelto queda en la pestaña de facturas ni en el route handler del PDF.
-- [ ] El listado conserva el filtro por mes, el filtro por estado, el buscador y el aviso de `live_key`
+- [x] Ningún error crudo de Facturapi llega al cliente ni al cuerpo de una respuesta HTTP.
+- [x] Ningún `new Facturapi(...)` suelto queda en la pestaña de facturas ni en el route handler del PDF.
+- [x] El listado conserva el filtro por mes, el filtro por estado, el buscador y el aviso de `live_key`
       faltante.
-- [ ] Los modales destructivos reusan `ConfirmModal`; ningún archivo importa `@/components/ui/*` ni `cn`.
-- [ ] `"use client"` solo donde hace falta; la página de facturas es Server Component.
-- [ ] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
+- [x] Los modales destructivos reusan `ConfirmModal`; ningún archivo importa `@/components/ui/*` ni `cn`.
+- [x] `"use client"` solo donde hace falta; la página de facturas es Server Component.
+- [x] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
 
 ## Decisiones tomadas y descartadas
 
