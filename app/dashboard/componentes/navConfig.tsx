@@ -16,6 +16,7 @@ import {
   PackageCheck,
   ArrowLeftRight,
   ClipboardCheck,
+  Receipt,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,5 +60,6 @@ export const NAV_LINKS: NavLink[] = [
   { href: "/dashboard/ventas", label: "Ventas", icon: ShoppingCart, minRole: 0, excludeRoles: [5] },
   { href: "/dashboard/tratamientos", label: "Tratamientos", icon: ClipboardList, minRole: 0, excludeRoles: [] },
   { href: "/dashboard/empleados", label: "Empleados", icon: UsersRound, minRole: 0, excludeRoles: [2, 3, 5] },
+  { href: "/dashboard/facturacion", label: "Facturación", icon: Receipt, minRole: 0, excludeRoles: [2, 3, 5] },
   { href: "/dashboard/usuarios", label: "Usuarios", icon: UserCog, minRole: 0, excludeRoles: [2, 3, 5] },
 ];

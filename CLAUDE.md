@@ -39,7 +39,7 @@ When writing or modifying any component or page, prioritize idiomatic Next.js (A
 
 ### Mutations go through Server Actions, not API routes
 
-- Almost all data mutation/reads happen via Next.js Server Actions (`"use server"` files named `actions.ts`), one per dashboard feature: `app/dashboard/<feature>/actions.ts` (citas, conteos, empleados, enlaces, movimientos, pacientes, pedidos, productos, proveedores, recepciones, servicios, sucursales, tratamientos, usuarios, ventas) plus `app/dashboard/actions.ts` and `app/actions/auth.ts`.
+- Almost all data mutation/reads happen via Next.js Server Actions (`"use server"` files named `actions.ts`), one per dashboard feature: `app/dashboard/<feature>/actions.ts` (citas, conteos, empleados, enlaces, facturacion, movimientos, pacientes, pedidos, productos, proveedores, recepciones, servicios, sucursales, tratamientos, usuarios, ventas) plus `app/dashboard/actions.ts` and `app/actions/auth.ts`. `facturacion` is the exception to "one `actions.ts`": each of its five tabs under `[id]/` has its own (see Domain modules below).
 - `app/api/` only has two real REST routes, both out of protocol necessity rather than CRUD: `app/api/upload` (file/image upload to Cloudinary) and `app/api/asistencias/iclock/*` (ADMS/iClock webhook that ZKTeco biometric attendance devices push to — see Attendance/biometric checadores below). Don't add new REST endpoints for CRUD — follow the server-action pattern instead; a new REST route is only justified when an external system dictates the wire protocol, like the checador webhook.
 - Actions commonly return a discriminated union like `ActionResult<T> = { ok: true; data: T } | { ok: false; message: string }` (see `app/actions/auth.ts`) — follow this convention for new actions so client code can branch on `result.ok`.
 
@@ -67,6 +67,7 @@ The sections below used to live inline here but are long and only relevant when 
 - Attendance / biometric checadores (ZKTeco ADMS webhook, `app/api/asistencias/iclock/*`): `docs/asistencias-biometricas.md`
 - Inventory (productos, proveedores, pedidos, recepciones, movimientos, conteos): `docs/inventario.md`
 - Google Calendar integration internals (service account JWT, PKCS conversion, env vars): `docs/google-calendar.md`
+- Billing / electronic invoicing (Facturapi, `BILLING` schema, API key encryption, audit log): `docs/facturacion.md`
 
 ### Date/time handling (critical, mssql-specific)
 
@@ -89,7 +90,7 @@ Rules when touching any code with `fecha*`/`created_at`/date fields:
 
 ### Directory conventions
 
-- `app/dashboard/<feature>/` — one folder per feature (citas, conteos, empleados, enlaces, movimientos, pacientes, pedidos, productos, proveedores, recepciones, servicios, sucursales, tratamientos, usuarios, ventas), each with `page.tsx`, `actions.ts`, and a `componentes/` subfolder for feature-local components. A feature with a detail view nests it under `<feature>/[id]/` (see `empleados/[id]/`, tabbed via its own `layout.tsx`).
+- `app/dashboard/<feature>/` — one folder per feature (citas, conteos, empleados, enlaces, facturacion, movimientos, pacientes, pedidos, productos, proveedores, recepciones, servicios, sucursales, tratamientos, usuarios, ventas), each with `page.tsx`, `actions.ts`, and a `componentes/` subfolder for feature-local components. A feature with a detail view nests it under `<feature>/[id]/` (see `empleados/[id]/`, tabbed via its own `layout.tsx`; `facturacion/[id]/` follows the same tabbed pattern but with one `actions.ts` per tab instead of a single shared one).
 - `app/api/asistencias/iclock/` — ADMS/iClock webhook for ZKTeco biometric checadores (see `docs/asistencias-biometricas.md`); the only other REST route besides `app/api/upload`.
 - `interfaces/` — one file per domain entity (`paciente.ts`, `cita.ts`, `tratamiento.ts`, `employee.ts`, `checador.ts`, `purchase_order.ts`, `movement.ts`, `stock_count.ts`, etc.), plain TS interfaces mirroring DB rows/DTOs.
 - `contexts/` — global client providers: `AuthContext`, `SucursalContext`, `ThemeContext`.

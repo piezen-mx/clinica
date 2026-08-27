@@ -974,3 +974,65 @@ GO
 CREATE INDEX [IX_asistencias_checador]
     ON [RH].[asistencias] ([id_checador], [fecha_hora])
 GO
+-------------------- FACTURACION (FACTURAPI) ---------------------
+USE [CentroPodologico]
+GO
+CREATE SCHEMA BILLING
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [BILLING].[organizations](
+    [id]            [int] IDENTITY(1,1) NOT NULL,
+    [uid]           [nvarchar](255) NOT NULL,   -- id de la organización en Facturapi
+    [id_empresa]    [int]           NOT NULL,
+    [test_key]      [nvarchar](max) NULL,       -- cifrada: v1:<iv>:<tag>:<cipher>
+    [live_key]      [nvarchar](max) NULL,       -- cifrada: v1:<iv>:<tag>:<cipher>
+    [is_live]       [bit]           NOT NULL CONSTRAINT [DF_organizations_is_live] DEFAULT (0),
+    [name]          [nvarchar](255) NULL,
+    [legal_name]    [nvarchar](255) NULL,
+    [tax_id]        [nvarchar](20)  NULL,
+    [tax_system]    [nvarchar](10)  NULL,
+    [phone]         [nvarchar](50)  NULL,
+    [website]       [nvarchar](255) NULL,
+    [support_email] [nvarchar](255) NULL,
+    [street]        [nvarchar](255) NULL,
+    [exterior]      [nvarchar](50)  NULL,
+    [interior]      [nvarchar](50)  NULL,
+    [neighborhood]  [nvarchar](255) NULL,
+    [zip]           [nvarchar](10)  NULL,
+    [city]          [nvarchar](255) NULL,
+    [municipality]  [nvarchar](255) NULL,
+    [state]         [nvarchar](255) NULL,
+    [country]       [nvarchar](10)  NULL,
+    [created_at]    [datetime2](0)  NULL,
+    [updated_at]    [datetime2](0)  NULL,
+ CONSTRAINT [PK_organizations] PRIMARY KEY CLUSTERED ([id] ASC),
+ CONSTRAINT [UQ_organizations_uid] UNIQUE ([uid])
+) ON [PRIMARY]
+GO
+CREATE INDEX [IX_organizations_empresa]
+    ON [BILLING].[organizations] ([id_empresa])
+GO
+
+CREATE TABLE [BILLING].[audit_log](
+    [id]         [int] IDENTITY(1,1) NOT NULL,
+    [id_empresa] [int]           NOT NULL,
+    [id_user]    [int]           NOT NULL,
+    [action]     [nvarchar](60)  NOT NULL,   -- ver catálogo abajo
+    [org_uid]    [nvarchar](255) NULL,
+    [target_id]  [nvarchar](255) NULL,       -- id de factura / id de api key / etc.
+    [mode]       [nvarchar](10)  NULL,       -- 'test' | 'live' | NULL
+    [detail]     [nvarchar](max) NULL,       -- NUNCA claves ni la contraseña del CSD
+    [created_at] [datetime2](0)  NOT NULL,
+ CONSTRAINT [PK_billing_audit_log] PRIMARY KEY CLUSTERED ([id] ASC)
+) ON [PRIMARY]
+GO
+CREATE INDEX [IX_billing_audit_empresa_fecha]
+    ON [BILLING].[audit_log] ([id_empresa] ASC, [created_at] DESC)
+GO
+
+-- Catálogo de valores de [action] (se amplía en los specs 29-31):
+-- org.create, org.update_legal, org.delete, cert.upload, cert.delete,
+-- key.renew_test, key.renew_live, key.revoke_live
