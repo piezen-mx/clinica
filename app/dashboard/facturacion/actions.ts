@@ -47,6 +47,7 @@ import {
   deleteOrganizationByUid,
   writeAuditEntry,
 } from "@/lib/billing/organizationsRepository";
+import type { OrganizationLegalInput } from "@/interfaces/organization";
 
 const OrgIdSchema = z.string().trim().min(1, "Organización inválida");
 
@@ -62,6 +63,34 @@ async function assertOwnedOrganization(uid: string, idEmpresa: number) {
     throw new Error("Organización no encontrada en la base de datos");
   }
   return organization;
+}
+
+/**
+ * Mapea `Organization["legal"]` (lo que confirma Facturapi) a `OrganizationLegalInput`
+ * (la copia local). Facturapi es la autoridad sobre todos estos campos una vez que
+ * confirma una operación (alta, edición, subida/eliminación de CSD) — este mapeo
+ * centraliza lo que antes estaba escrito a mano en cada call site (spec 33).
+ */
+function organizationLegalFromFacturapi(org: Organization): OrganizationLegalInput {
+  const { legal } = org;
+  return {
+    name: legal.name,
+    legal_name: legal.legal_name,
+    tax_id: legal.tax_id,
+    tax_system: legal.tax_system,
+    phone: legal.phone ?? null,
+    website: legal.website ?? null,
+    support_email: legal.support_email ?? null,
+    street: legal.address.street ?? null,
+    exterior: legal.address.exterior ?? null,
+    interior: legal.address.interior ?? null,
+    neighborhood: legal.address.neighborhood ?? null,
+    zip: legal.address.zip ?? null,
+    city: legal.address.city ?? null,
+    municipality: legal.address.municipality ?? null,
+    state: legal.address.state ?? null,
+    country: legal.address.country ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -276,14 +305,12 @@ export async function updateOrganizationLegal(
       },
     });
 
-    // `tax_id`/`country` no vienen del formulario (ver arriba): se toman de la respuesta
-    // de Facturapi, que es la autoridad sobre esos dos campos.
+    // Se persiste `organizationLegalFromFacturapi(org)` completo, no una mezcla con
+    // `data`: Facturapi es la autoridad sobre todos los datos legales una vez que
+    // confirma la edición (no solo `tax_id`/`country`, que ni siquiera vienen del
+    // formulario — ver arriba).
     await db.transaction(async (tx) => {
-      await updateOrganizationLegalRecord(tx, uid, id_empresa, {
-        ...data,
-        tax_id: org.legal.tax_id,
-        country: org.legal.address.country,
-      });
+      await updateOrganizationLegalRecord(tx, uid, id_empresa, organizationLegalFromFacturapi(org));
       await writeAuditEntry(tx, {
         id_empresa,
         id_user,
@@ -358,11 +385,17 @@ export async function uploadCertificate(formData: FormData): Promise<ActionResul
 
     const org = await getRootClient().organizations.uploadCertificate(orgId, cerFile, keyFile, password);
 
-    await writeAuditEntry(db, {
-      id_empresa,
-      id_user,
-      action: "cert.upload",
-      org_uid: orgId,
+    // El CSD es, confirmado con soporte de Facturapi, el mecanismo real por el que
+    // cada organización obtiene su RFC en una cuenta multi-RFC: hay que refrescar la
+    // copia local con lo que Facturapi confirme, no solo auditar la operación (spec 33).
+    await db.transaction(async (tx) => {
+      await updateOrganizationLegalRecord(tx, orgId, id_empresa, organizationLegalFromFacturapi(org));
+      await writeAuditEntry(tx, {
+        id_empresa,
+        id_user,
+        action: "cert.upload",
+        org_uid: orgId,
+      });
     });
 
     revalidatePath(`/dashboard/facturacion/${orgId}/general`);
@@ -381,13 +414,23 @@ export async function deleteCertificate(orgId: string): Promise<ActionResult<Org
     const uid = orgIdCheck.data;
     await assertOwnedOrganization(uid, id_empresa);
 
-    const org = await getRootClient().organizations.deleteCertificate(uid);
+    await getRootClient().organizations.deleteCertificate(uid);
 
-    await writeAuditEntry(db, {
-      id_empresa,
-      id_user,
-      action: "cert.delete",
-      org_uid: uid,
+    // A diferencia de `uploadCertificate`, la respuesta de `deleteCertificate` no
+    // trae `legal` (el SDK la tipa como `Organization` completo, pero el endpoint
+    // de borrado no lo incluye) — se vuelve a consultar con `retrieve` para obtener
+    // los datos legales actualizados, sea cual sea el RFC que Facturapi reporte tras
+    // quitar el certificado.
+    const org = await getRootClient().organizations.retrieve(uid);
+
+    await db.transaction(async (tx) => {
+      await updateOrganizationLegalRecord(tx, uid, id_empresa, organizationLegalFromFacturapi(org));
+      await writeAuditEntry(tx, {
+        id_empresa,
+        id_user,
+        action: "cert.delete",
+        org_uid: uid,
+      });
     });
 
     revalidatePath(`/dashboard/facturacion/${uid}/general`);
