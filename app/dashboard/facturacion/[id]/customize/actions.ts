@@ -144,3 +144,38 @@ export async function updateOrganizationCustomization(
     return { ok: false, message: toUserMessage(err) };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Lectura auxiliar para la UI
+// ---------------------------------------------------------------------------
+
+export interface IInvoiceSeriesFolio {
+  series: string;
+  nextFolio: number;
+}
+
+/**
+ * Serie por defecto de facturas y su siguiente folio (en el modo activo de la
+ * organización), para que el formulario muestre el folio actual junto al campo
+ * (ver Riesgos, spec 31: cambiar el folio a ciegas puede dejar un hueco en la
+ * numeración). Es una lectura, no una mutación: no escribe en `audit_log`.
+ */
+export async function getInvoiceSeriesFolio(orgId: string): Promise<ActionResult<IInvoiceSeriesFolio>> {
+  try {
+    const { id_empresa } = await requireBillingAccess();
+
+    const client = await getOrgClient(orgId, id_empresa);
+    const organization = await client.organizations.retrieve(orgId);
+    const series = organization.customization.default_series[INVOICE_SERIES_TYPE];
+
+    const seriesGroups = await client.organizations.listSeriesGroup(orgId);
+    const matchingSeries = seriesGroups.find((group) => group.series === series);
+
+    const mode = await resolveMode(orgId, id_empresa);
+    const nextFolio = mode === "live" ? matchingSeries?.next_folio : matchingSeries?.next_folio_test;
+
+    return { ok: true, data: { series, nextFolio: nextFolio ?? 1 } };
+  } catch (err) {
+    return { ok: false, message: toUserMessage(err) };
+  }
+}
