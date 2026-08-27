@@ -3,7 +3,10 @@
 - `app/dashboard/facturacion/` manages organizations (`BILLING.organizations`) for electronic
   invoicing via [Facturapi](https://www.facturapi.io). Ported from a standalone project
   (`factura`) across specs 28-31; spec 28 covers only the schema, shared infra, and the
-  organizations listing + General tab. `docs/facturacion.md` grows with each spec.
+  organizations listing + General tab. The module is complete as of spec 31: five tabs
+  (General, Clientes, Productos, Facturas, Personalizar) under
+  `app/dashboard/facturacion/[id]/`, each with its own `page.tsx`/`actions.ts`/`componentes/`,
+  same convention as `empleados/[id]/documentos/`.
 - Tenant scope: every read/write filters by `id_empresa` from the JWT, **not** by
   `id_sucursal`. A Facturapi organization is a fiscal entity of the whole company — the CSD
   certificate and folio series are per organization, not per branch. Don't "fix" this by
@@ -25,6 +28,61 @@
   as `/dashboard/usuarios` and `/dashboard/empleados`); every server action also opens with
   `requireBillingAccess()` (`lib/auth/session.ts`) since the `proxy.ts` matcher doesn't cover
   `/api/*` routes that later specs may add.
+
+## Tabs of an organization
+
+`app/dashboard/facturacion/[id]/layout.tsx` renders the Live-mode banner and `OrgTabs`
+(the tab strip) around whichever tab is active; each tab is its own route with its own
+`actions.ts`:
+
+| Tab | Route | `actions.ts` | Added in |
+|---|---|---|---|
+| General | `[id]/general` | `app/dashboard/facturacion/actions.ts` (shared with the listing) | spec 28 |
+| Clientes | `[id]/customers` | `[id]/customers/actions.ts` | spec 29 |
+| Productos | `[id]/products` | `[id]/products/actions.ts` | spec 29 |
+| Facturas | `[id]/invoices` | `[id]/invoices/actions.ts` | spec 30 |
+| Personalizar | `[id]/customize` | `[id]/customize/actions.ts` | spec 31 |
+
+Clientes, Productos and Facturas call Facturapi through `getOrgClient(uid, idEmpresa)`
+(domain calls, mode-aware). General **and** Personalizar use `getRootClient()` instead —
+see `getOrgClient` contract below for why Personalizar is there and not with the other
+three.
+
+### Personalizar (spec 31)
+
+- **Uses `getRootClient()`, not `getOrgClient()`.** The spec's plan called for
+  `getOrgClient(uid, id_empresa)` (like customers/products/invoices), but Facturapi
+  rejects `uploadLogo`, `updateCustomization`, `updateDefaultSeries`,
+  `updateSeriesGroup` and `listSeriesGroup` with `"Esta operación requiere una API key
+  de producción"` when called with an organization-scoped key (test or live) — they're
+  account-administration endpoints, same class as the CSD and API-key calls in
+  `app/dashboard/facturacion/actions.ts`, which already use `getRootClient()`.
+  `[id]/customize/actions.ts` validates tenant ownership itself
+  (`assertOwnedOrganization`, duplicated from the same pattern in
+  `app/dashboard/facturacion/actions.ts`) since `getRootClient()` doesn't do that check.
+- Logo: `uploadOrganizationLogo(formData)` sends the file straight to
+  `organizations.uploadLogo` — Facturapi hosts it, not Cloudinary (it's Facturapi that
+  prints the PDF, so routing the file through `app/api/upload` would just add a hop where
+  the logo could end up out of sync). The file is validated by `UploadLogoSchema`
+  (`lib/billing/schemas.ts`) — extension, 2 MB max, and real PNG/JPEG magic bytes — the
+  same shape of check as `UploadCertificateSchema`'s DER signature check for the CSD.
+  The preview uses `next/image`, so Facturapi's asset host is allowed in
+  `next.config.ts`'s `images.remotePatterns`: `logo_url` actually resolves to a Google
+  Cloud Storage bucket (`storage.googleapis.com/cdn.facturapi.io/organization/<uid>/logo.<ext>`),
+  not to `cdn.facturapi.io` directly — confirmed against a real upload. The pattern
+  restricts `pathname` to that bucket, not all of `storage.googleapis.com`.
+- Appearance and series: `updateOrganizationCustomization(orgId, input)` validates via
+  `OrganizationCustomizationSchema` (hex color, alphanumeric series, positive integer
+  folio) and chains up to three Facturapi calls depending on what changed —
+  `updateCustomization` (color + `pdf_extra`), `updateDefaultSeries` (only if the series
+  changed), `updateSeriesGroup` (only if the folio changed, writing `next_folio` or
+  `next_folio_test` depending on which mode — test/live — the organization is currently
+  in). `getInvoiceSeriesFolio` is a read-only helper (no `audit_log` entry) used by the
+  page to show the current folio next to the input, so a blind edit doesn't create a gap
+  in the numbering unnoticed.
+- Scope: customization is per organization, not per branch (same `id_empresa`-only filter
+  as the rest of the module — see Tenant scope above) and there's no PDF preview before
+  saving; the next real invoice is how a change gets confirmed.
 
 ## API key lifecycle
 
@@ -65,22 +123,35 @@
 ## `audit_log` catalog
 
 `BILLING.audit_log` is append-only (by convention, not by DB permission — see spec 28 Risks)
-and not read from any UI yet. Current `action` values, written from
-`app/dashboard/facturacion/actions.ts`:
+and not read from any UI yet. Complete `action` catalog as of spec 31, and which
+`actions.ts` writes each one:
 
-| Action | Written by |
-|---|---|
-| `org.create` | `createOrganization` |
-| `org.update_legal` | `updateOrganizationLegal` |
-| `org.delete` | `deleteOrganization` |
-| `cert.upload` | `uploadCertificate` |
-| `cert.delete` | `deleteCertificate` |
-| `key.renew_test` | `renewTestApiKey` |
-| `key.renew_live` | `renewLiveApiKey` |
-| `key.revoke_live` | `deleteLiveApiKey` |
+| Action | Written by | `actions.ts` |
+|---|---|---|
+| `org.create` | `createOrganization` | `app/dashboard/facturacion/actions.ts` |
+| `org.update_legal` | `updateOrganizationLegal` | `app/dashboard/facturacion/actions.ts` |
+| `org.delete` | `deleteOrganization` | `app/dashboard/facturacion/actions.ts` |
+| `cert.upload` | `uploadCertificate` | `app/dashboard/facturacion/actions.ts` |
+| `cert.delete` | `deleteCertificate` | `app/dashboard/facturacion/actions.ts` |
+| `key.renew_test` | `renewTestApiKey` | `app/dashboard/facturacion/actions.ts` |
+| `key.renew_live` | `renewLiveApiKey` | `app/dashboard/facturacion/actions.ts` |
+| `key.revoke_live` | `deleteLiveApiKey` | `app/dashboard/facturacion/actions.ts` |
+| `customer.create` | `createCustomerAction` | `[id]/customers/actions.ts` |
+| `customer.update` | `updateCustomerAction` | `[id]/customers/actions.ts` |
+| `product.create` | `createProductAction` | `[id]/products/actions.ts` |
+| `product.update` | `updateProductAction` | `[id]/products/actions.ts` |
+| `mode.set_live` | `setOrgMode` | `app/dashboard/facturacion/actions.ts` |
+| `mode.set_test` | `setOrgMode` | `app/dashboard/facturacion/actions.ts` |
+| `invoice.create` | `createInvoiceAction` | `[id]/invoices/actions.ts` |
+| `invoice.cancel` | `cancelInvoiceAction` | `[id]/invoices/actions.ts` |
+| `invoice.email` | `sendInvoiceByEmailAction` | `[id]/invoices/actions.ts` |
+| `invoice.pdf` | PDF route handler (`app/api/facturacion/organizations/[orgId]/invoices/[invoiceId]/pdf`) | — |
+| `org.upload_logo` | `uploadOrganizationLogo` | `[id]/customize/actions.ts` |
+| `org.update_customization` | `updateOrganizationCustomization` | `[id]/customize/actions.ts` |
 
-`detail` must never contain key material or the CSD password. The catalog grows in specs
-29-31 (customers, products, invoices, customization).
+`detail` must never contain key material or the CSD password. The catalog is complete as
+of spec 31 — a future spec that adds a new mutation should extend
+`BillingAuditAction` (`lib/billing/organizationsRepository.ts`) and this table together.
 
 ## `getOrgClient` contract
 
@@ -88,7 +159,12 @@ and not read from any UI yet. Current `action` values, written from
   account-level operations — everything in spec 28's `actions.ts` uses this one, since
   managing organizations is an account operation, not invoicing on behalf of one) and
   `getOrgClient(uid, idEmpresa)` (organization-specific test/live key, reserved for the
-  domain calls — customers, products, invoices — that specs 29 and 30 add).
+  domain calls — customers, products, invoices — that specs 29 and 30 add). It might
+  look like Personalización (spec 31) belongs on the `getOrgClient` side too, since it
+  changes what a *comprobante* looks like — but Facturapi's logo/customization/series
+  endpoints only accept the platform key (`"Esta operación requiere una API key de
+  producción"` otherwise), so `[id]/customize/actions.ts` uses `getRootClient()` and
+  validates tenant ownership itself, same as General.
 - `getOrgClient` takes **no `mode` parameter**. It resolves the organization via
   `getOrganizationByUid` (which enforces the tenant filter), reads `is_live` from that row,
   and picks the matching key internally. The original project took `mode` as a function

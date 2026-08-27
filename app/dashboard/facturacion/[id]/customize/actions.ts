@@ -12,9 +12,14 @@
  * 1. El original acepta cualquier archivo de cualquier tamaño para el logo
  *    (`organizations.ts:261-262`, con casts `as File`). Aquí pasa por
  *    `UploadLogoSchema`, que valida extensión, tamaño y tipo real por magic bytes.
- * 2. Ambas actions usan `getOrgClient(uid, id_empresa)`, que valida pertenencia
- *    (vía `getOrganizationByUid`) antes de tocar Facturapi — el original no
- *    filtra por tenant.
+ * 2. Las tres funciones usan `getRootClient()`, no `getOrgClient()`. El plan del
+ *    spec 31 decía `getOrgClient(uid, id_empresa)`, pero Facturapi rechaza el logo,
+ *    la personalización y las series con `"Esta operación requiere una API key de
+ *    producción"` cuando se llaman con una clave de organización (test o live):
+ *    son endpoints de administración de cuenta, igual que el CSD y las API keys
+ *    en `app/dashboard/facturacion/actions.ts`, que ya usan `getRootClient()` por
+ *    la misma razón. La pertenencia se valida aparte con `assertOwnedOrganization`
+ *    (mismo patrón que ese archivo), ya que `getRootClient()` no la valida.
  * 3. `org.upload_logo` y `org.update_customization` quedan en `audit_log`; el
  *    original no registra ninguna de las dos operaciones.
  */
@@ -25,7 +30,7 @@ import type { Organization } from "facturapi";
 import db from "@/database/connection";
 import { ActionResult } from "@/app/actions/auth";
 import { requireBillingAccess } from "@/lib/auth/session";
-import { getOrgClient } from "@/lib/billing/facturapiClient";
+import { getRootClient } from "@/lib/billing/facturapiClient";
 import { toUserMessage } from "@/lib/billing/errors";
 import { UploadLogoSchema, OrganizationCustomizationSchema } from "@/lib/billing/schemas";
 import { getOrganizationByUid, writeAuditEntry } from "@/lib/billing/organizationsRepository";
@@ -33,11 +38,23 @@ import { getOrganizationByUid, writeAuditEntry } from "@/lib/billing/organizatio
 const INVOICE_SERIES_TYPE = "I" as const;
 
 /**
- * Resuelve `mode` ("test" | "live") leyendo la misma fila que `getOrgClient` ya
- * consultó para construir el cliente. Se necesita aparte porque el siguiente
- * folio vive en dos campos distintos de la serie (`next_folio`/`next_folio_test`)
- * y hay que saber cuál tocar; el mismo patrón que `resolveMode` en
- * `invoices/actions.ts`.
+ * Confirma que `uid` pertenece a `idEmpresa` antes de tocar Facturapi — mismo
+ * chequeo que `assertOwnedOrganization` en `app/dashboard/facturacion/actions.ts`,
+ * duplicado aquí porque no está exportado desde allá (ver nota del mismo archivo
+ * sobre por qué cada pestaña tiene su propio `actions.ts`).
+ */
+async function assertOwnedOrganization(uid: string, idEmpresa: number) {
+  const organization = await getOrganizationByUid(db, uid, idEmpresa);
+  if (!organization) {
+    throw new Error("Organización no encontrada en la base de datos");
+  }
+  return organization;
+}
+
+/**
+ * Resuelve `mode` ("test" | "live") de la fila local. Se necesita para saber cuál
+ * de los dos campos de folio tocar (`next_folio`/`next_folio_test`); mismo patrón
+ * que `resolveMode` en `invoices/actions.ts`.
  */
 async function resolveMode(uid: string, idEmpresa: number): Promise<"test" | "live"> {
   const organization = await getOrganizationByUid(db, uid, idEmpresa);
@@ -60,9 +77,9 @@ export async function uploadOrganizationLogo(formData: FormData): Promise<Action
       return { ok: false, message: parsed.error.issues[0]?.message ?? "Archivo inválido" };
     }
     const { orgId, logoFile } = parsed.data;
+    await assertOwnedOrganization(orgId, id_empresa);
 
-    const client = await getOrgClient(orgId, id_empresa);
-    const organization = await client.organizations.uploadLogo(orgId, logoFile);
+    const organization = await getRootClient().organizations.uploadLogo(orgId, logoFile);
 
     await writeAuditEntry(db, {
       id_empresa,
@@ -101,8 +118,9 @@ export async function updateOrganizationCustomization(
       return { ok: false, message: parsed.error.issues[0]?.message ?? "Datos inválidos" };
     }
     const data = parsed.data;
+    await assertOwnedOrganization(orgId, id_empresa);
 
-    const client = await getOrgClient(orgId, id_empresa);
+    const client = getRootClient();
     const current = await client.organizations.retrieve(orgId);
 
     await client.organizations.updateCustomization(orgId, {
@@ -163,8 +181,9 @@ export interface IInvoiceSeriesFolio {
 export async function getInvoiceSeriesFolio(orgId: string): Promise<ActionResult<IInvoiceSeriesFolio>> {
   try {
     const { id_empresa } = await requireBillingAccess();
+    await assertOwnedOrganization(orgId, id_empresa);
 
-    const client = await getOrgClient(orgId, id_empresa);
+    const client = getRootClient();
     const organization = await client.organizations.retrieve(orgId);
     const series = organization.customization.default_series[INVOICE_SERIES_TYPE];
 

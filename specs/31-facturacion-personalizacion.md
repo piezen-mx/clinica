@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** Spec 28 (`getOrgClient`, `lib/billing/schemas.ts` con la validación de archivo por magic
   bytes, `lib/billing/errors.ts`, `lib/auth/session.ts`, `BILLING.audit_log`, `OrgTabs`), Spec 30
   (indicador de modo Live en el layout de la organización). No modifica base de datos.
@@ -125,20 +125,20 @@ Con Facturapi en **modo Test**, sobre la organización de los specs anteriores:
 
 ## Criterios de aceptación
 
-- [ ] La pestaña Personalizar aparece en `OrgTabs` y permite subir logo, cambiar color, opciones de PDF y
+- [x] La pestaña Personalizar aparece en `OrgTabs` y permite subir logo, cambiar color, opciones de PDF y
       series.
-- [ ] La subida de logo valida extensión, tamaño y tipo real por magic bytes, reusando el validador del
+- [x] La subida de logo valida extensión, tamaño y tipo real por magic bytes, reusando el validador del
       spec 28; no queda ningún cast `as File` / `as string` sobre `FormData`.
-- [ ] `OrganizationCustomizationSchema` rechaza colores no hexadecimales y folios no positivos.
-- [ ] Ambas actions abren con `requireBillingAccess()` y `safeParse`, y usan `getOrgClient` sin parámetro
+- [x] `OrganizationCustomizationSchema` rechaza colores no hexadecimales y folios no positivos.
+- [x] Ambas actions abren con `requireBillingAccess()` y `safeParse`, y usan `getOrgClient` sin parámetro
       `mode`.
-- [ ] `org.upload_logo` y `org.update_customization` quedan registrados en `BILLING.audit_log`.
-- [ ] Ningún error crudo de Facturapi llega al cliente.
-- [ ] La vista previa del logo usa `next/image` y el host de Facturapi está en `images.remotePatterns`.
-- [ ] Ningún archivo importa `@/components/ui/*` ni `cn`; la pestaña se ve consistente en claro y oscuro.
-- [ ] `"use client"` solo donde hace falta; la página es Server Component.
-- [ ] `docs/facturacion.md` refleja el módulo completo.
-- [ ] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
+- [x] `org.upload_logo` y `org.update_customization` quedan registrados en `BILLING.audit_log`.
+- [x] Ningún error crudo de Facturapi llega al cliente.
+- [x] La vista previa del logo usa `next/image` y el host de Facturapi está en `images.remotePatterns`.
+- [x] Ningún archivo importa `@/components/ui/*` ni `cn`; la pestaña se ve consistente en claro y oscuro.
+- [x] `"use client"` solo donde hace falta; la página es Server Component.
+- [x] `docs/facturacion.md` refleja el módulo completo.
+- [x] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
 
 ## Decisiones tomadas y descartadas
 
