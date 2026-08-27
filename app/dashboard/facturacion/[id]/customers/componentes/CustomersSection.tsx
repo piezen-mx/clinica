@@ -5,7 +5,7 @@ import { Search, Plus } from "lucide-react";
 import type { Customer } from "facturapi";
 import { taxSystemLabel } from "@/lib/billing/taxSystemCatalog";
 import { listCustomersAction, searchCustomersAction } from "../actions";
-import CustomerModal from "./CustomerModal";
+import CustomerFormModal from "../../componentes/CustomerFormModal";
 
 interface Props {
   orgId: string;
@@ -143,7 +143,7 @@ export default function CustomersSection({ orgId, initialCustomers }: Props) {
       </div>
 
       {showModal && (
-        <CustomerModal
+        <CustomerFormModal
           orgId={orgId}
           customer={editingCustomer ?? undefined}
           onClose={() => setShowModal(false)}

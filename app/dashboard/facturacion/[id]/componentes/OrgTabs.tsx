@@ -9,9 +9,9 @@ interface Props {
 
 /**
  * Tira de pestañas horizontal (no un segundo sidebar), copiando
- * `app/dashboard/empleados/[id]/componentes/EmployeeTabs.tsx`. Con "Personalizar"
- * (spec 31) el módulo queda completo: General, Clientes, Productos, Facturas,
- * Personalizar.
+ * `app/dashboard/empleados/[id]/componentes/EmployeeTabs.tsx`. Con "Por facturar"
+ * (spec 34) el módulo queda con seis pestañas: General, Clientes, Productos,
+ * Facturas, Personalizar, Por facturar.
  */
 const TABS = (orgId: string) => [
   { href: `/dashboard/facturacion/${orgId}/general`, label: "General" },
@@ -19,6 +19,7 @@ const TABS = (orgId: string) => [
   { href: `/dashboard/facturacion/${orgId}/products`, label: "Productos" },
   { href: `/dashboard/facturacion/${orgId}/invoices`, label: "Facturas" },
   { href: `/dashboard/facturacion/${orgId}/customize`, label: "Personalizar" },
+  { href: `/dashboard/facturacion/${orgId}/pending`, label: "Por facturar" },
 ];
 
 export default function OrgTabs({ orgId }: Props) {

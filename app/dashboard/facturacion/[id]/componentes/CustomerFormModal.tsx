@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Customer } from "facturapi";
 import { TAX_SYSTEM_OPTIONS } from "@/lib/billing/taxSystemCatalog";
 import { ICustomerFormInput } from "@/interfaces/organization";
-import { createCustomerAction, updateCustomerAction } from "../actions";
+import { createCustomerAction, updateCustomerAction } from "../customers/actions";
 
 interface Props {
   orgId: string;
@@ -57,7 +57,14 @@ function customerToForm(customer: Customer): ICustomerFormInput {
   };
 }
 
-export default function CustomerModal({ orgId, customer, onClose, onSaved }: Props) {
+/**
+ * Alta/edición de cliente del padrón de Facturapi (spec 29). Vive en
+ * `[id]/componentes/`, no en `customers/componentes/`, porque no está acoplado
+ * a esa pestaña (solo recibe `orgId`/`customer`/callbacks) y lo consume también
+ * `BillableInvoiceModal.tsx` (spec 34) para dar de alta un cliente sin salir del
+ * modal de timbrado — un solo formulario para ambos casos de uso.
+ */
+export default function CustomerFormModal({ orgId, customer, onClose, onSaved }: Props) {
   const router = useRouter();
   const isEditing = Boolean(customer);
 
