@@ -47,6 +47,7 @@ import {
   deleteOrganizationByUid,
   writeAuditEntry,
 } from "@/lib/billing/organizationsRepository";
+import type { OrganizationLegalInput } from "@/interfaces/organization";
 
 const OrgIdSchema = z.string().trim().min(1, "Organización inválida");
 
@@ -62,6 +63,34 @@ async function assertOwnedOrganization(uid: string, idEmpresa: number) {
     throw new Error("Organización no encontrada en la base de datos");
   }
   return organization;
+}
+
+/**
+ * Mapea `Organization["legal"]` (lo que confirma Facturapi) a `OrganizationLegalInput`
+ * (la copia local). Facturapi es la autoridad sobre todos estos campos una vez que
+ * confirma una operación (alta, edición, subida/eliminación de CSD) — este mapeo
+ * centraliza lo que antes estaba escrito a mano en cada call site (spec 33).
+ */
+function organizationLegalFromFacturapi(org: Organization): OrganizationLegalInput {
+  const { legal } = org;
+  return {
+    name: legal.name,
+    legal_name: legal.legal_name,
+    tax_id: legal.tax_id,
+    tax_system: legal.tax_system,
+    phone: legal.phone ?? null,
+    website: legal.website ?? null,
+    support_email: legal.support_email ?? null,
+    street: legal.address.street ?? null,
+    exterior: legal.address.exterior ?? null,
+    interior: legal.address.interior ?? null,
+    neighborhood: legal.address.neighborhood ?? null,
+    zip: legal.address.zip ?? null,
+    city: legal.address.city ?? null,
+    municipality: legal.address.municipality ?? null,
+    state: legal.address.state ?? null,
+    country: legal.address.country ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -276,14 +305,12 @@ export async function updateOrganizationLegal(
       },
     });
 
-    // `tax_id`/`country` no vienen del formulario (ver arriba): se toman de la respuesta
-    // de Facturapi, que es la autoridad sobre esos dos campos.
+    // Se persiste `organizationLegalFromFacturapi(org)` completo, no una mezcla con
+    // `data`: Facturapi es la autoridad sobre todos los datos legales una vez que
+    // confirma la edición (no solo `tax_id`/`country`, que ni siquiera vienen del
+    // formulario — ver arriba).
     await db.transaction(async (tx) => {
-      await updateOrganizationLegalRecord(tx, uid, id_empresa, {
-        ...data,
-        tax_id: org.legal.tax_id,
-        country: org.legal.address.country,
-      });
+      await updateOrganizationLegalRecord(tx, uid, id_empresa, organizationLegalFromFacturapi(org));
       await writeAuditEntry(tx, {
         id_empresa,
         id_user,
