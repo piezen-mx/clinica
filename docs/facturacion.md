@@ -3,8 +3,8 @@
 - `app/dashboard/facturacion/` manages organizations (`BILLING.organizations`) for electronic
   invoicing via [Facturapi](https://www.facturapi.io). Ported from a standalone project
   (`factura`) across specs 28-31; spec 28 covers only the schema, shared infra, and the
-  organizations listing + General tab. The module is complete as of spec 31: five tabs
-  (General, Clientes, Productos, Facturas, Personalizar) under
+  organizations listing + General tab. As of spec 34 the module has six tabs (General,
+  Clientes, Productos, Facturas, Personalizar, Por facturar) under
   `app/dashboard/facturacion/[id]/`, each with its own `page.tsx`/`actions.ts`/`componentes/`,
   same convention as `empleados/[id]/documentos/`.
 - Tenant scope: every read/write filters by `id_empresa` from the JWT, **not** by
@@ -42,11 +42,12 @@
 | Productos | `[id]/products` | `[id]/products/actions.ts` | spec 29 |
 | Facturas | `[id]/invoices` | `[id]/invoices/actions.ts` | spec 30 |
 | Personalizar | `[id]/customize` | `[id]/customize/actions.ts` | spec 31 |
+| Por facturar | `[id]/pending` | `[id]/pending/actions.ts` | spec 34 |
 
-Clientes, Productos and Facturas call Facturapi through `getOrgClient(uid, idEmpresa)`
-(domain calls, mode-aware). General **and** Personalizar use `getRootClient()` instead —
-see `getOrgClient` contract below for why Personalizar is there and not with the other
-three.
+Clientes, Productos, Facturas and Por facturar call Facturapi through
+`getOrgClient(uid, idEmpresa)` (domain calls, mode-aware). General **and** Personalizar use
+`getRootClient()` instead — see `getOrgClient` contract below for why Personalizar is there
+and not with the other three.
 
 ### Personalizar (spec 31)
 
@@ -83,6 +84,54 @@ three.
 - Scope: customization is per organization, not per branch (same `id_empresa`-only filter
   as the rest of the module — see Tenant scope above) and there's no PDF preview before
   saving; the next real invoice is how a change gets confirmed.
+
+### Por facturar (spec 34)
+
+- Links clinical billing (`dbo.consultas`, `dbo.pagos`, `dbo.Tratamiento_onicomicosis*`) to
+  Facturapi: lists fully-paid, not-yet-invoiced charges from consultas and treatments, and
+  stamps them as single-concept, single-CFDI invoices. Sales (`dbo.Ventas`) are explicitly
+  out of scope — a later spec reuses the same mechanism for them.
+- **One CFDI per operation, always `PUE`, always one concept.** A consulta's `costo_total`
+  is one operation; a treatment's revisión (`id_tratamiento_pago_tipo = 1`) and its
+  tratamiento (`= 2`) are two independent operations, each billable once the sum of its
+  active payments reaches its expected total. No expected amount is hardcoded anywhere —
+  they're read from `consultas.costo_total` and `dbo.Tratamiento_pagos_tipos.total`.
+- `BILLING.organizations.default_product_id` (nullable `NVARCHAR(50)`, added by this spec)
+  stores the Facturapi product `id` used as the single line item's concept for every invoice
+  emitted from this tab. Set from Personalizar (`setDefaultProductAction`, using
+  `getOrgClient` — listing an organization's own products is a domain call, unlike the rest
+  of that tab). While it's `NULL` the tab shows a notice and
+  `createBillableInvoiceAction` refuses to call Facturapi at all.
+- `lib/billing/billableOperations.ts` holds all the SQL, because both this tab and
+  `[id]/invoices/actions.ts` (to reverse the stamp on cancellation) need it:
+  - `listBillableOperations(filters)` — a three-way `UNION ALL` (consulta, revisión,
+    tratamiento), scoped by `id_empresa` and the active `id_sucursal` (from
+    `SucursalContext`, passed explicitly by the client, same pattern as
+    `getSaleProducts(id_sucursal)` in `ventas/actions.ts` — not validated against the
+    user's allowed branches, same as the rest of the repo).
+  - `resolveBillableOperation(source, sourceId, idEmpresa, idSucursal)` — recalculates an
+    operation from scratch right before stamping (never trusts the list's numbers): sum of
+    active payments, the payment form of the largest one, `null` if it's no longer billable
+    (underpaid, canceled, or already invoiced by someone else in the meantime). This is what
+    closes the window between rendering the list and clicking "Facturar".
+  - `markOperationInvoiced(tx, ...)` / `clearInvoiceStamp(tx, uuid)` — stamp and revert
+    `facturado`/`uuid_cfdi` on the payment rows, always inside the same `db.transaction` as
+    the matching `audit_log` entry (`invoice.create` on stamp, `invoice.cancel` on revert).
+- **Table name note:** the spec 34 document refers to the treatment payment-type catalog as
+  `dbo.Tratamiento_onicomicosis_pagos_tipos`. The real table (already in use by
+  `app/dashboard/tratamientos/actions.ts`) is `dbo.Tratamiento_pagos_tipos` —
+  `billableOperations.ts` uses the real name.
+- The invoice's single line: `product: default_product_id`, `quantity: 1`, `price` = the
+  recalculated total, `description` = the form's (pre-filled per origin — "Consulta
+  podológica" / "Revisión de especialista" / "Tratamiento de onicomicosis" — but editable),
+  `payment_form` = the SAT `clave` of the largest payment (`dbo.MetodosPagos.clave`),
+  `payment_method: "PUE"`, `use` from the form (`D01` default).
+- `[id]/componentes/CustomerFormModal.tsx` is the customer form **moved** out of
+  `customers/componentes/` (it was never coupled to that tab — only `orgId`/`customer`/
+  callbacks) so `BillableInvoiceModal.tsx` can reuse it for "new client without leaving the
+  modal" instead of duplicating it.
+- `invoice.create`/`invoice.cancel` are reused as-is — no new `audit_log` action was added;
+  `source`/`source_id` travel in `invoice.create`'s `detail` (see catalog below).
 
 ## API key lifecycle
 
@@ -123,8 +172,10 @@ three.
 ## `audit_log` catalog
 
 `BILLING.audit_log` is append-only (by convention, not by DB permission — see spec 28 Risks)
-and not read from any UI yet. Complete `action` catalog as of spec 31, and which
-`actions.ts` writes each one:
+and not read from any UI yet. Complete `action` catalog as of spec 31 (unchanged through
+spec 34 — Por facturar reuses `invoice.create`/`invoice.cancel` rather than adding new
+actions; it records `source`/`source_id` in `detail` instead), and which `actions.ts` writes
+each one:
 
 | Action | Written by | `actions.ts` |
 |---|---|---|
@@ -142,12 +193,12 @@ and not read from any UI yet. Complete `action` catalog as of spec 31, and which
 | `product.update` | `updateProductAction` | `[id]/products/actions.ts` |
 | `mode.set_live` | `setOrgMode` | `app/dashboard/facturacion/actions.ts` |
 | `mode.set_test` | `setOrgMode` | `app/dashboard/facturacion/actions.ts` |
-| `invoice.create` | `createInvoiceAction` | `[id]/invoices/actions.ts` |
-| `invoice.cancel` | `cancelInvoiceAction` | `[id]/invoices/actions.ts` |
+| `invoice.create` | `createInvoiceAction`; also `createBillableInvoiceAction` (spec 34, `detail` carries `source`/`source_id`) | `[id]/invoices/actions.ts`; `[id]/pending/actions.ts` |
+| `invoice.cancel` | `cancelInvoiceAction` (also reverts the Por facturar stamp, spec 34) | `[id]/invoices/actions.ts` |
 | `invoice.email` | `sendInvoiceByEmailAction` | `[id]/invoices/actions.ts` |
 | `invoice.pdf` | PDF route handler (`app/api/facturacion/organizations/[orgId]/invoices/[invoiceId]/pdf`) | — |
 | `org.upload_logo` | `uploadOrganizationLogo` | `[id]/customize/actions.ts` |
-| `org.update_customization` | `updateOrganizationCustomization` | `[id]/customize/actions.ts` |
+| `org.update_customization` | `updateOrganizationCustomization`; also `setDefaultProductAction` (spec 34) | `[id]/customize/actions.ts` |
 
 `detail` must never contain key material or the CSD password. The catalog is complete as
 of spec 31 — a future spec that adds a new mutation should extend
