@@ -12,6 +12,7 @@ interface Props {
 interface FormState {
   name: string;
   legal_name: string;
+  tax_id: string;
   tax_system: string;
   street: string;
   exterior: string;
@@ -26,6 +27,7 @@ function buildEmptyForm(): FormState {
   return {
     name: "",
     legal_name: "",
+    tax_id: "",
     tax_system: "",
     street: "",
     exterior: "",
@@ -105,6 +107,19 @@ export default function CreateOrganizationModal({ onClose }: Props) {
                 <input type="text" name="legal_name" value={form.legal_name} onChange={handleChange} required className={inputClass} />
               </label>
               <label className="flex flex-col gap-1">
+                <span className={labelClass}>RFC *</span>
+                <input
+                  type="text"
+                  name="tax_id"
+                  value={form.tax_id}
+                  onChange={(e) => setForm((prev) => ({ ...prev, tax_id: e.target.value.toUpperCase() }))}
+                  required
+                  maxLength={13}
+                  placeholder="XAXX010101000"
+                  className={`${inputClass} font-mono uppercase`}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
                 <span className={labelClass}>Régimen fiscal *</span>
                 <select name="tax_system" value={form.tax_system} onChange={handleChange} required className={inputClass}>
                   <option value="">Seleccione…</option>
@@ -153,11 +168,6 @@ export default function CreateOrganizationModal({ onClose }: Props) {
               </label>
             </div>
           </section>
-
-          <p className="text-xs text-[#44474f] dark:text-zinc-500">
-            El RFC y el país quedan fijos a los de la cuenta de facturación de la empresa —
-            Facturapi no permite asignar un RFC distinto por organización.
-          </p>
 
           <div className="flex justify-end gap-3 pt-2 border-t border-[#c4c6d0] dark:border-zinc-700">
             <button
