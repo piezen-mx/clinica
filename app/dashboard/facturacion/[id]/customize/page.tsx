@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { getOrganizationDetail } from "../../actions";
-import { getInvoiceSeriesFolio } from "./actions";
+import { getInvoiceSeriesFolio, listOrganizationProducts } from "./actions";
 import LogoSection from "./componentes/LogoSection";
 import CustomizationSection from "./componentes/CustomizationSection";
+import DefaultProductSection from "./componentes/DefaultProductSection";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -19,6 +20,10 @@ export default async function OrganizationCustomizePage({ params }: Props) {
   // la pestaña sigue mostrando logo y apariencia — solo se pierde el dato informativo.
   const folioResult = await getInvoiceSeriesFolio(id);
 
+  // Igual que el folio: si el padrón de productos falla, el selector se muestra
+  // vacío en vez de tumbar el resto de la pestaña.
+  const productsResult = await listOrganizationProducts(id);
+
   return (
     <div className="flex flex-col gap-6">
       <LogoSection orgId={id} organization={organization} />
@@ -26,6 +31,11 @@ export default async function OrganizationCustomizePage({ params }: Props) {
         orgId={id}
         organization={organization}
         currentFolio={folioResult.ok ? folioResult.data : null}
+      />
+      <DefaultProductSection
+        orgId={id}
+        products={productsResult.ok ? productsResult.data : []}
+        currentDefaultProductId={detailResult.data.defaultProductId}
       />
     </div>
   );

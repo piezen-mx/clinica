@@ -25,15 +25,19 @@
  */
 
 import { revalidatePath } from "next/cache";
-import type { Organization } from "facturapi";
+import type { Organization, Product } from "facturapi";
 
 import db from "@/database/connection";
 import { ActionResult } from "@/app/actions/auth";
 import { requireBillingAccess } from "@/lib/auth/session";
-import { getRootClient } from "@/lib/billing/facturapiClient";
+import { getRootClient, getOrgClient } from "@/lib/billing/facturapiClient";
 import { toUserMessage } from "@/lib/billing/errors";
-import { UploadLogoSchema, OrganizationCustomizationSchema } from "@/lib/billing/schemas";
-import { getOrganizationByUid, writeAuditEntry } from "@/lib/billing/organizationsRepository";
+import { UploadLogoSchema, OrganizationCustomizationSchema, SetDefaultProductSchema } from "@/lib/billing/schemas";
+import {
+  getOrganizationByUid,
+  setDefaultProduct,
+  writeAuditEntry,
+} from "@/lib/billing/organizationsRepository";
 
 const INVOICE_SERIES_TYPE = "I" as const;
 
@@ -194,6 +198,59 @@ export async function getInvoiceSeriesFolio(orgId: string): Promise<ActionResult
     const nextFolio = mode === "live" ? matchingSeries?.next_folio : matchingSeries?.next_folio_test;
 
     return { ok: true, data: { series, nextFolio: nextFolio ?? 1 } };
+  } catch (err) {
+    return { ok: false, message: toUserMessage(err) };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Producto por defecto para la pestaña Por facturar (spec 34)
+// ---------------------------------------------------------------------------
+
+/**
+ * Padrón de productos de la organización para el selector de producto por
+ * defecto. A diferencia de `uploadOrganizationLogo`/`updateOrganizationCustomization`,
+ * esta sí usa `getOrgClient(uid, id_empresa)`: listar productos es una llamada de
+ * dominio, no de administración de cuenta (mismo criterio que `../products/page.tsx`).
+ */
+export async function listOrganizationProducts(orgId: string): Promise<ActionResult<Product[]>> {
+  try {
+    const { id_empresa } = await requireBillingAccess();
+    await assertOwnedOrganization(orgId, id_empresa);
+
+    const client = await getOrgClient(orgId, id_empresa);
+    const result = await client.products.list({ limit: 50 });
+    return { ok: true, data: result.data };
+  } catch (err) {
+    return { ok: false, message: toUserMessage(err) };
+  }
+}
+
+/** Guarda el producto elegido como concepto único de toda factura emitida desde Por facturar. */
+export async function setDefaultProductAction(
+  orgId: string,
+  input: unknown
+): Promise<ActionResult<null>> {
+  try {
+    const { id_empresa, id_user } = await requireBillingAccess();
+
+    const parsed = SetDefaultProductSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, message: parsed.error.issues[0]?.message ?? "Producto inválido" };
+    }
+    await assertOwnedOrganization(orgId, id_empresa);
+
+    await setDefaultProduct(db, orgId, id_empresa, parsed.data.productId);
+
+    await writeAuditEntry(db, {
+      id_empresa,
+      id_user,
+      action: "org.update_customization",
+      org_uid: orgId,
+    });
+
+    revalidatePath(`/dashboard/facturacion/${orgId}/customize`);
+    return { ok: true, data: null };
   } catch (err) {
     return { ok: false, message: toUserMessage(err) };
   }

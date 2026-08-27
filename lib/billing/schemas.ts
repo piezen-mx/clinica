@@ -437,3 +437,14 @@ export const OrganizationCustomizationSchema = z.object({
 });
 
 export type OrganizationCustomizationInput = z.infer<typeof OrganizationCustomizationSchema>;
+
+/**
+ * `id` del producto de Facturapi guardado como concepto único al facturar cobros
+ * (spec 34). `orgId` no forma parte del schema, mismo criterio que `ProductSchema`.
+ * Acepta `null` para permitir limpiar la configuración.
+ */
+export const SetDefaultProductSchema = z.object({
+  productId: z.string().trim().min(1, "Selecciona un producto").nullable(),
+});
+
+export type SetDefaultProductInput = z.infer<typeof SetDefaultProductSchema>;

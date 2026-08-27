@@ -103,6 +103,8 @@ export interface IOrganizationDetail {
   hasTestKey: boolean;
   hasLiveKey: boolean;
   isLive: boolean;
+  /** Producto de Facturapi usado como concepto único al facturar cobros (spec 34); `null` si no se ha configurado. */
+  defaultProductId: string | null;
 }
 
 /**
@@ -128,6 +130,7 @@ export async function getOrganizationDetail(orgId: string): Promise<ActionResult
         hasTestKey: localRecord.hasTestKey,
         hasLiveKey: localRecord.hasLiveKey,
         isLive: localRecord.is_live,
+        defaultProductId: localRecord.default_product_id,
       },
     };
   } catch (err) {
