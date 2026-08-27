@@ -31,6 +31,7 @@ import { getOrgClient } from "@/lib/billing/facturapiClient";
 import { toUserMessage } from "@/lib/billing/errors";
 import { CreateInvoiceSchema, CancelInvoiceSchema, SendInvoiceEmailSchema, CreateInvoiceInput } from "@/lib/billing/schemas";
 import { getOrganizationByUid, writeAuditEntry } from "@/lib/billing/organizationsRepository";
+import { clearInvoiceStamp } from "@/lib/billing/billableOperations";
 
 function toFacturapiInvoicePayload(data: CreateInvoiceInput): Record<string, unknown> {
   const payload: Record<string, unknown> = {
@@ -165,16 +166,26 @@ export async function cancelInvoiceAction(
     const invoice = await client.invoices.cancel(parsed.data.invoiceId, { motive: parsed.data.motive });
 
     const mode = await resolveMode(uid, id_empresa);
-    await writeAuditEntry(db, {
-      id_empresa,
-      id_user,
-      action: "invoice.cancel",
-      org_uid: uid,
-      target_id: String(invoice.folio_number),
-      mode,
+    // Cancelar devuelve los cobros a pendientes (spec 34): `clearInvoiceStamp` limpia
+    // `facturado`/`uuid_cfdi` en `dbo.pagos` y `dbo.Tratamiento_onicomicosis_pagos`
+    // dentro de la misma transacción que la entrada de `audit_log`, para que nunca
+    // exista un estado en que la factura está cancelada y el cobro sigue marcado.
+    // Una factura ajena a la pestaña Por facturar (`uuid` que ninguna fila
+    // referencia) no afecta ninguna fila.
+    await db.transaction(async (tx) => {
+      await clearInvoiceStamp(tx, invoice.uuid);
+      await writeAuditEntry(tx, {
+        id_empresa,
+        id_user,
+        action: "invoice.cancel",
+        org_uid: uid,
+        target_id: String(invoice.folio_number),
+        mode,
+      });
     });
 
     revalidatePath(`/dashboard/facturacion/${uid}/invoices`);
+    revalidatePath(`/dashboard/facturacion/${uid}/pending`);
     return { ok: true, data: invoice };
   } catch (err) {
     return { ok: false, message: toUserMessage(err) };
