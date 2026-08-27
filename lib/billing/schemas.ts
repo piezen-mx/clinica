@@ -11,6 +11,7 @@ import { CancellationMotive, InvoiceUse, PaymentForm, PaymentMethod } from "fact
 
 const ZIP_REGEX = /^\d{5}$/;
 const TAX_SYSTEM_REGEX = /^\d{3}$/;
+const RFC_REGEX = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/;
 
 function requiredText(label: string, max = 255) {
   return z.string().trim().min(1, `${label} es requerido`).max(max, `${label} es demasiado largo`);
@@ -48,17 +49,19 @@ function optionalEmail() {
 /**
  * Datos legales + dirección requeridos para crear una organización en Facturapi.
  *
- * **No incluye `tax_id` ni `country`.** Facturapi v2 (la única versión activa; v1 fue
- * retirada en abril de 2023) no acepta ninguno de los dos ni al crear ni al editar una
- * organización — quedan fijos al RFC y país de la cuenta dueña de la API key. Una
- * organización en Facturapi v2 es más una sub-marca de la misma razón social que una
- * entidad fiscal independiente. `tax_id`/`country` siguen existiendo como columnas de
- * solo lectura en `BILLING.organizations` (reflejan lo que Facturapi realmente asigna),
- * pero no se piden en el formulario ni se envían en el `create`/`updateLegal`.
+ * **Incluye `tax_id` pero no `country`.** El RFC es editable por organización gracias
+ * al add-on multi-RFC contratado en esta cuenta de Facturapi — a diferencia de lo que
+ * asumía la implementación original (spec 28), no queda fijo al de la cuenta dueña de
+ * la API key. `country` sí se fija a `"MEX"` fuera del formulario (en la action), por
+ * decisión de producto: todas las organizaciones de esta cuenta son entidades fiscales
+ * mexicanas (spec 32).
  */
 export const CreateOrganizationSchema = z.object({
   name: requiredText("El nombre comercial"),
   legal_name: requiredText("La razón social"),
+  tax_id: requiredText("El RFC", 13)
+    .transform((value) => value.toUpperCase())
+    .pipe(z.string().regex(RFC_REGEX, "El RFC no tiene un formato válido")),
   tax_system: requiredText("El régimen fiscal", 10).regex(
     TAX_SYSTEM_REGEX,
     "El régimen fiscal debe ser el código SAT de 3 dígitos"
@@ -150,8 +153,6 @@ export type UploadCertificateInput = z.infer<typeof UploadCertificateSchema>;
 // ---------------------------------------------------------------------------
 // Clientes y productos (spec 29)
 // ---------------------------------------------------------------------------
-
-const RFC_REGEX = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/;
 
 /**
  * `NaN` es lo que llega a Facturapi cuando el original hace `parseFloat(data.price)`
