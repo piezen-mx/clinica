@@ -22,6 +22,8 @@ export interface IOrganizationRecord {
   country:       string | null;
   created_at:    string | null;   // "YYYY-MM-DD HH:mm:ss"
   updated_at:    string | null;   // "YYYY-MM-DD HH:mm:ss"
+  /** Producto de Facturapi usado como concepto único al facturar cobros (spec 34). */
+  default_product_id: string | null;
 }
 
 /**
@@ -103,4 +105,32 @@ export interface IOrganizationCustomizationInput {
   next_folio:     number | null;   // entero positivo
   invoice_series: string | null;
   pdf_extra:      Record<string, string | boolean | null>;
+}
+
+/** Origen de una operación cobrable (spec 34). */
+export type BillableSource =
+  | "consulta"
+  | "tratamiento_revision"   // pagos id_tratamiento_pago_tipo = 1
+  | "tratamiento";           // pagos id_tratamiento_pago_tipo = 2
+
+/** Renglón del listado "Por facturar" (spec 34). */
+export interface IBillableOperation {
+  source:             BillableSource;
+  source_id:          number;         // id_consulta o id_tratamiento
+  patient_name:       string;
+  patient_whatsapp:   string | null;
+  podologist_name:    string | null;
+  last_payment_date:  string;         // "YYYY-MM-DD HH:mm:ss", vía CONVERT(varchar(19), …, 120)
+  total:              number;         // suma de los pagos que componen la operación
+  payment_form:       string;         // clave SAT del pago de mayor monto
+  payment_form_label: string;         // descripción del método, para mostrar
+}
+
+/** Captura del modal de facturación de un cobro (spec 34). */
+export interface ICreateBillableInvoiceInput {
+  source:      BillableSource;
+  source_id:   number;
+  customer_id: string;   // id del cliente en Facturapi
+  description: string;   // concepto, precargado y editable
+  use:         string;   // uso del CFDI, default "D01"
 }
