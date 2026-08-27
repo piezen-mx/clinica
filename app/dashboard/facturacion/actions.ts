@@ -385,11 +385,17 @@ export async function uploadCertificate(formData: FormData): Promise<ActionResul
 
     const org = await getRootClient().organizations.uploadCertificate(orgId, cerFile, keyFile, password);
 
-    await writeAuditEntry(db, {
-      id_empresa,
-      id_user,
-      action: "cert.upload",
-      org_uid: orgId,
+    // El CSD es, confirmado con soporte de Facturapi, el mecanismo real por el que
+    // cada organización obtiene su RFC en una cuenta multi-RFC: hay que refrescar la
+    // copia local con lo que Facturapi confirme, no solo auditar la operación (spec 33).
+    await db.transaction(async (tx) => {
+      await updateOrganizationLegalRecord(tx, orgId, id_empresa, organizationLegalFromFacturapi(org));
+      await writeAuditEntry(tx, {
+        id_empresa,
+        id_user,
+        action: "cert.upload",
+        org_uid: orgId,
+      });
     });
 
     revalidatePath(`/dashboard/facturacion/${orgId}/general`);
@@ -410,11 +416,16 @@ export async function deleteCertificate(orgId: string): Promise<ActionResult<Org
 
     const org = await getRootClient().organizations.deleteCertificate(uid);
 
-    await writeAuditEntry(db, {
-      id_empresa,
-      id_user,
-      action: "cert.delete",
-      org_uid: uid,
+    // Mismo refresco que `uploadCertificate`: sea cual sea el RFC que Facturapi
+    // reporte tras quitar el certificado, la copia local debe reflejarlo (spec 33).
+    await db.transaction(async (tx) => {
+      await updateOrganizationLegalRecord(tx, uid, id_empresa, organizationLegalFromFacturapi(org));
+      await writeAuditEntry(tx, {
+        id_empresa,
+        id_user,
+        action: "cert.delete",
+        org_uid: uid,
+      });
     });
 
     revalidatePath(`/dashboard/facturacion/${uid}/general`);
