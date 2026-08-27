@@ -405,9 +405,8 @@ const PdfExtraSchema = z.object({
   repeat_signature: z.boolean().optional(),
 });
 
-/** Color hexadecimal, folio entero positivo y serie alfanumérica corta. */
+/** Color hexadecimal, folio entero positivo y serie alfanumérica corta. `orgId` no forma parte del schema — como en `CustomerSchema`/`ProductSchema`, la action lo recibe como parámetro aparte y lo valida indirectamente al pasar por `getOrgClient`. */
 export const OrganizationCustomizationSchema = z.object({
-  orgId: requiredText("El identificador de la organización", 255),
   color: z
     .string()
     .trim()

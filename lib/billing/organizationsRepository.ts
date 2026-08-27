@@ -355,7 +355,7 @@ export async function deleteOrganizationByUid(
   }
 }
 
-/** Catálogo de acciones auditables (se amplía en los specs 29-31). */
+/** Catálogo de acciones auditables (ampliado por los specs 29, 30 y 31). */
 export type BillingAuditAction =
   | "org.create"
   | "org.update_legal"
@@ -374,7 +374,9 @@ export type BillingAuditAction =
   | "invoice.create"
   | "invoice.cancel"
   | "invoice.email"
-  | "invoice.pdf";
+  | "invoice.pdf"
+  | "org.upload_logo"
+  | "org.update_customization";
 
 export interface INewAuditEntry {
   id_empresa: number;

@@ -96,3 +96,11 @@ export interface ICreateInvoiceInput {
 
 /** Motivos de cancelación admitidos por el SAT (spec 30). */
 export type InvoiceCancellationMotive = "01" | "02" | "03" | "04";
+
+/** Opciones de personalización del comprobante que expone Facturapi (spec 31). */
+export interface IOrganizationCustomizationInput {
+  color:          string | null;   // hexadecimal, validado
+  next_folio:     number | null;   // entero positivo
+  invoice_series: string | null;
+  pdf_extra:      Record<string, string | boolean | null>;
+}
