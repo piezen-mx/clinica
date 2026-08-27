@@ -1,8 +1,29 @@
 # 32 — Facturación: RFC propio por organización (multi-RFC)
 
+## Nota de implementación (2026-08-27) — spec bloqueado, revertido
+
+Al implementar el plan se probó en vivo contra la cuenta real de Facturapi (modo Test):
+`organizations.updateLegal` rechaza **tanto `tax_id` como `address.country`** con
+`400 organization_settings_invalid` (`"El campo \"tax_id\" no está permitido"` /
+`"El campo \"address.country\" no está permitido"`), contradiciendo la premisa del spec
+de que el add-on multi-RFC ya contratado en la cuenta habilita `tax_id` editable por
+organización vía este endpoint. No se encontró en el SDK (`facturapi@4.20.0`) ningún
+endpoint alternativo para fijar el RFC por organización.
+
+Se abortó la implementación y se revirtieron todos los cambios de código de este spec
+(`lib/billing/schemas.ts`, `app/dashboard/facturacion/actions.ts`,
+`CreateOrganizationModal.tsx`, `OrganizationLegalSection.tsx`, `docs/facturacion.md`) —
+el módulo queda en el mismo estado que antes de este spec (RFC de solo lectura, heredado
+de la cuenta, tal como documentaba el spec 28 originalmente).
+
+**Antes de reabrir este spec:** confirmar con soporte de Facturapi o su dashboard de
+cuenta si el add-on multi-RFC está realmente activo y, si lo está, qué endpoint/flujo
+específico expone para fijarlo (no es `organizations.create` + `organizations.updateLegal`,
+que es lo único que expone el SDK usado por este módulo).
+
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Obsoleto — bloqueado en implementación, ver nota abajo.
 - **Depende de:** Spec 28 (`CreateOrganizationSchema`, `UpdateOrganizationLegalSchema`, `organizationsRepository.ts`, `createOrganization`/`updateOrganizationLegal` en `app/dashboard/facturacion/actions.ts`, `CreateOrganizationModal.tsx`, `OrganizationLegalSection.tsx`), Spec 29 (`RFC_REGEX` de `CustomerSchema`). No depende de las specs 30-31 salvo por convención (no las modifica).
 - **Fecha:** 2026-08-27
 - **Objetivo:** Permitir que cada organización de Facturapi tenga su propio RFC (`tax_id`), aprovechando el add-on multi-RFC ya contratado en la cuenta, en vez de heredarlo fijo de la cuenta como asume hoy el módulo.
