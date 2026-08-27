@@ -323,3 +323,118 @@ export const InvoicePdfParamsSchema = z.object({
 });
 
 export type InvoicePdfParamsInput = z.infer<typeof InvoicePdfParamsSchema>;
+
+// ---------------------------------------------------------------------------
+// Personalización del comprobante (spec 31)
+// ---------------------------------------------------------------------------
+
+/** De sobra para un logo: Facturapi lo reduce en su propio pipeline al imprimirlo en el PDF. */
+const LOGO_MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+
+/**
+ * Mismo enfoque que `hasDerSignature` (arriba, para el CSD) y `detectMimeFromBytes`
+ * (`app/api/upload/route.ts`): el `accept` de un `<input type="file">` es solo del
+ * cliente, así que el tipo real se confirma leyendo los primeros bytes, no la
+ * extensión ni el `Content-Type` declarado. Formatos aceptados: los que Facturapi
+ * imprime en el PDF (PNG, JPEG); el original no valida nada (`organizations.ts:261-262`).
+ */
+function hasImageSignature(bytes: Uint8Array): boolean {
+  if (bytes.length < 4) return false;
+  // PNG: 89 50 4E 47
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return true;
+  // JPEG: FF D8 FF
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true;
+  return false;
+}
+
+/**
+ * Valida el logo por extensión, tamaño y tipo real por magic bytes. Como la lectura
+ * de bytes es asíncrona, las actions que usen este schema deben llamar `safeParseAsync`.
+ */
+export const UploadLogoSchema = z
+  .object({
+    orgId: requiredText("El identificador de la organización", 255),
+    logoFile: z.instanceof(File, { message: "El logo es requerido" }),
+  })
+  .superRefine(async (data, ctx) => {
+    const { logoFile } = data;
+    if (logoFile.size === 0) {
+      ctx.addIssue({ code: "custom", message: "El logo es requerido", path: ["logoFile"] });
+      return;
+    }
+    if (!/\.(png|jpe?g)$/i.test(logoFile.name)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "El logo debe ser una imagen PNG o JPEG",
+        path: ["logoFile"],
+      });
+      return;
+    }
+    if (logoFile.size > LOGO_MAX_SIZE_BYTES) {
+      ctx.addIssue({
+        code: "custom",
+        message: "El logo excede el tamaño máximo permitido (2 MB)",
+        path: ["logoFile"],
+      });
+      return;
+    }
+    const head = new Uint8Array(await logoFile.slice(0, 4).arrayBuffer());
+    if (!hasImageSignature(head)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "El contenido del archivo no corresponde a una imagen PNG o JPEG válida",
+        path: ["logoFile"],
+      });
+    }
+  });
+
+export type UploadLogoInput = z.infer<typeof UploadLogoSchema>;
+
+const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
+const INVOICE_SERIES_REGEX = /^[A-Z0-9]{1,10}$/;
+
+/** Claves de `pdf_extra` que expone Facturapi (`Organization["customization"]["pdf_extra"]`). Cualquier otra clave queda fuera al pasar por `z.object`, en vez de reenviarse tal cual. */
+const PdfExtraSchema = z.object({
+  codes: z.boolean().optional(),
+  address_codes: z.boolean().optional(),
+  product_key: z.boolean().optional(),
+  round_unit_price: z.boolean().optional(),
+  tax_breakdown: z.boolean().optional(),
+  ieps_breakdown: z.boolean().optional(),
+  render_carta_porte: z.boolean().optional(),
+  repeat_signature: z.boolean().optional(),
+});
+
+/** Color hexadecimal, folio entero positivo y serie alfanumérica corta. */
+export const OrganizationCustomizationSchema = z.object({
+  orgId: requiredText("El identificador de la organización", 255),
+  color: z
+    .string()
+    .trim()
+    .nullable()
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : null))
+    .refine((value) => value === null || HEX_COLOR_REGEX.test(value), {
+      message: "El color debe ser un hexadecimal válido, por ejemplo #0051D5",
+    }),
+  invoice_series: optionalText(10).refine(
+    (value) => value === null || INVOICE_SERIES_REGEX.test(value),
+    { message: "La serie debe ser alfanumérica, en mayúsculas, de hasta 10 caracteres" }
+  ),
+  next_folio: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .optional()
+    .transform((raw, ctx) => {
+      if (raw === null || raw === undefined || raw === "") return null;
+      const value = typeof raw === "number" ? raw : Number(raw);
+      if (!Number.isFinite(value) || !Number.isInteger(value) || value <= 0) {
+        ctx.addIssue({ code: "custom", message: "El folio debe ser un número entero mayor a cero" });
+        return z.NEVER;
+      }
+      return value;
+    }),
+  pdf_extra: PdfExtraSchema,
+});
+
+export type OrganizationCustomizationInput = z.infer<typeof OrganizationCustomizationSchema>;
