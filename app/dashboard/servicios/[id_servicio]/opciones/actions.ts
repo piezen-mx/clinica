@@ -3,20 +3,7 @@
 import db from "@/database/connection";
 import { IServicioOpcion } from "@/interfaces/servicio_opcion";
 import { IServicio } from "@/interfaces/servicio";
-import { IAuthUser } from "@/interfaces/auth";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET_SEED!);
-
-async function getActiveUser(): Promise<IAuthUser> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth_token")?.value;
-  if (!token) throw new Error("No autenticado");
-  const { payload } = await jwtVerify(token, JWT_SECRET);
-  return payload as unknown as IAuthUser;
-}
 
 export async function getServicio(id_servicio: number): Promise<IServicio | null> {
   const data = await db.queryParams(
@@ -50,9 +37,21 @@ export async function saveOpcionServicio(
 ): Promise<{ ok: boolean; message?: string }> {
   try {
     const { id_servicio_opcion, id_servicio, nombre, descripcion, precio } = form;
-    const { id_sucursal } = await getActiveUser();
 
     if (id_servicio_opcion === 0) {
+      // The option must belong to the same sucursal as its parent servicio,
+      // not the creating user's JWT "home" sucursal — otherwise it silently
+      // disappears from that branch's consulta (getServiciosTabData filters
+      // servicio_opciones by id_sucursal).
+      const servicioRows = await db.queryParams(
+        `SELECT [id_sucursal] FROM [CentroPodologico].[dbo].[servicios] WHERE [id_servicio] = @id_servicio`,
+        { id_servicio }
+      );
+      const id_sucursal = (servicioRows as { id_sucursal: number }[])[0]?.id_sucursal;
+      if (id_sucursal == null) {
+        return { ok: false, message: "Servicio no encontrado" };
+      }
+
       await db.queryParams(
         `INSERT INTO [CentroPodologico].[dbo].[servicio_opciones]
            ([id_servicio_opcion],[id_servicio],[nombre],[descripcion],[precio],[id_sucursal],[status])
