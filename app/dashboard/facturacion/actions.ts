@@ -161,15 +161,17 @@ export async function createOrganization(input: unknown): Promise<ActionResult<O
     }
     const data = parsed.data;
 
-    // Facturapi v2 solo acepta `name` al crear; el resto de los datos legales se
-    // fija en un segundo paso con `updateLegal` (ver nota en CreateOrganizationSchema:
-    // `tax_id`/`country` no pueden fijarse por organización, quedan a cargo de la cuenta).
+    // Facturapi v2 solo acepta `name` al crear; el resto de los datos legales —
+    // incluido `tax_id`, editable por organización gracias al add-on multi-RFC
+    // contratado en esta cuenta (ver nota en CreateOrganizationSchema)— se fija
+    // en un segundo paso con `updateLegal`.
     const created = await getRootClient().organizations.create({ name: data.name });
 
     try {
       const org = await getRootClient().organizations.updateLegal(created.id, {
         name: data.name,
         legal_name: data.legal_name,
+        tax_id: data.tax_id,
         tax_system: data.tax_system,
         address: {
           street: data.street,
@@ -179,6 +181,7 @@ export async function createOrganization(input: unknown): Promise<ActionResult<O
           city: data.city,
           municipality: data.municipality,
           state: data.state,
+          country: "MEX",
         },
       });
 
@@ -255,11 +258,10 @@ export async function updateOrganizationLegal(
     }
     const data = parsed.data;
 
-    // Sin `tax_id` ni `address.country`: Facturapi v2 los rechaza en `updateLegal`
-    // (ver nota en CreateOrganizationSchema) — quedan fijos a los de la cuenta.
     const org = await getRootClient().organizations.updateLegal(uid, {
       name: data.name,
       legal_name: data.legal_name,
+      tax_id: data.tax_id,
       tax_system: data.tax_system,
       phone: data.phone,
       website: data.website,
@@ -273,11 +275,13 @@ export async function updateOrganizationLegal(
         city: data.city,
         municipality: data.municipality,
         state: data.state,
+        country: "MEX",
       },
     });
 
-    // `tax_id`/`country` no vienen del formulario (ver arriba): se toman de la respuesta
-    // de Facturapi, que es la autoridad sobre esos dos campos.
+    // `tax_id`/`country` se guardan tal como los confirma la respuesta de Facturapi
+    // (no el valor recién enviado en `data`) — es la autoridad sobre esos dos campos
+    // una vez que acepta el `updateLegal`.
     await db.transaction(async (tx) => {
       await updateOrganizationLegalRecord(tx, uid, id_empresa, {
         ...data,
