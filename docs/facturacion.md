@@ -11,13 +11,17 @@
   `id_sucursal`. A Facturapi organization is a fiscal entity of the whole company — the CSD
   certificate and folio series are per organization, not per branch. Don't "fix" this by
   adding an `id_sucursal` filter later.
-- **RFC and country are shared across every organization in the account, not unique per
-  organization.** Facturapi v2 (the only version still live — v1 was retired in April 2023)
-  rejects `tax_id` and `address.country` on both `organizations.create` and
-  `organizations.updateLegal`; they're fixed to the RFC/country of the account that owns the
-  `FACTURAPI_USER_KEY`. An "organization" here is closer to a sub-brand of one legal entity
-  than an independent taxpayer. `CreateOrganizationSchema` doesn't collect either field; the
-  UI shows them read-only, sourced from Facturapi's response, never from user input.
+- **RFC is editable per organization, depending on whether the account has Facturapi's
+  multi-RFC add-on contracted — this account does (spec 32).** Without that add-on, Facturapi
+  v2 rejects `tax_id` on `organizations.create`/`organizations.updateLegal` and fixes it to the
+  RFC of the account that owns the `FACTURAPI_USER_KEY` (which is what spec 28 originally
+  assumed, before the add-on was confirmed). `CreateOrganizationSchema` collects `tax_id` from
+  the form (same `RFC_REGEX` as `CustomerSchema`) and both `createOrganization` and
+  `updateOrganizationLegal` send it to Facturapi; the value actually persisted to
+  `BILLING.organizations` is whatever Facturapi confirms back in its response, not the raw form
+  value. `country` stays fixed to `"MEX"` — not a Facturapi API limitation, but a product
+  decision (spec 32): every organization in this account is a Mexican fiscal entity, so
+  `country` isn't a form field at all.
 - `createOrganization` is necessarily two Facturapi calls, not one: `organizations.create`
   accepts only `{ name }` in v2 (nesting the payload under `legal`, like the original project
   did, fails outright — `"El campo legal no está permitido"`); the rest of the legal data is
