@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** Spec 28 (`BILLING.organizations`, `organizationsRepository.ts` — `updateOrganizationLegal`, `insertOrganization`; `uploadCertificate`/`deleteCertificate` en `app/dashboard/facturacion/actions.ts`; `OrganizationCertificateSection.tsx`). Sustituye al spec 32 (`Obsoleto` — ver su nota de implementación), que intentaba resolver el mismo problema con un campo de formulario que Facturapi rechaza.
 - **Fecha:** 2026-08-27
 - **Objetivo:** Mantener sincronizada la copia local (`BILLING.organizations.tax_id`/`country`, y el resto de los datos legales) con lo que Facturapi realmente tiene después de subir o eliminar el certificado de sello digital (CSD) de una organización — que es, confirmado con soporte de Facturapi, el mecanismo real por el que cada organización obtiene su propio RFC en una cuenta con el add-on multi-RFC contratado.
@@ -120,12 +120,12 @@ Con Facturapi en modo Test:
 
 ## Criterios de aceptación
 
-- [ ] `organizationLegalFromFacturapi` centraliza el mapeo `Organization["legal"]` → `OrganizationLegalInput`, usado por `updateOrganizationLegal`, `uploadCertificate` y `deleteCertificate`.
-- [ ] Subir un CSD con un RFC distinto actualiza `[BILLING].[organizations].[tax_id]` (y el resto de los campos legales) sin necesidad de editar los datos legales por separado.
-- [ ] Eliminar un CSD actualiza `[BILLING].[organizations]` con lo que Facturapi reporte después de la eliminación.
-- [ ] `uploadCertificate` y `deleteCertificate` persisten el refresco y su entrada de auditoría dentro de la misma `db.transaction`, igual que `createOrganization`/`updateOrganizationLegal`.
-- [ ] Ningún cambio de UI, esquema de base de datos, ni de `interfaces/organization.ts`.
-- [ ] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
+- [x] `organizationLegalFromFacturapi` centraliza el mapeo `Organization["legal"]` → `OrganizationLegalInput`, usado por `updateOrganizationLegal`, `uploadCertificate` y `deleteCertificate`.
+- [x] Subir un CSD con un RFC distinto actualiza `[BILLING].[organizations].[tax_id]` (y el resto de los campos legales) sin necesidad de editar los datos legales por separado.
+- [x] Eliminar un CSD actualiza `[BILLING].[organizations]` con lo que Facturapi reporte después de la eliminación.
+- [x] `uploadCertificate` y `deleteCertificate` persisten el refresco y su entrada de auditoría dentro de la misma `db.transaction`, igual que `createOrganization`/`updateOrganizationLegal`.
+- [x] Ningún cambio de UI, esquema de base de datos, ni de `interfaces/organization.ts`.
+- [x] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
 
 ## Decisiones tomadas y descartadas
 
@@ -133,6 +133,10 @@ Con Facturapi en modo Test:
 - **Extraer `organizationLegalFromFacturapi` en vez de duplicar el mapeo una tercera y cuarta vez.** El mapeo `org.legal` → `OrganizationLegalInput` ya estaba escrito a mano dos veces (`createOrganization`, `updateOrganizationLegal`); agregarlo sin extraerlo en `uploadCertificate`/`deleteCertificate` lo hubiera dejado cuadruplicado.
 - **Sin backfill de organizaciones ya desincronizadas.** Mismo criterio que el spec 32 aplicó a la migración de RFC: se corrige hacia adelante: la siguiente vez que se suba/elimine un CSD (o se editen los datos legales) en cada organización, su fila local se sincroniza. No hay un paso automático para las que no vuelvan a tocarse.
 - **No se valida el RFC que Facturapi devuelva tras eliminar un CSD.** No se conoce de antemano si Facturapi lo deja vacío, lo revierte al de la cuenta, o algo distinto — este spec simplemente persiste lo que sea que reporte, sin agregar lógica especial para ese caso.
+
+## Nota de implementación
+
+- **`deleteCertificate` no devuelve `org.legal`.** El plan (paso 3) asumía que `organizations.deleteCertificate(uid)` devolvía un `Organization` completo, como lo tipa el SDK de Facturapi (`Promise<Organization>`). En la práctica, el endpoint `DELETE /organizations/{id}/certificate` no incluye el objeto `legal` en su respuesta — `organizationLegalFromFacturapi(org)` fallaba con `TypeError: Cannot read properties of undefined (reading 'name')`. Se corrigió volviendo a consultar con `organizations.retrieve(uid)` inmediatamente después de `deleteCertificate(uid)`, y usando ese resultado (que sí trae `legal` completo) tanto para el mapeo local como para el valor de retorno de la action. `uploadCertificate` no tuvo este problema — su respuesta sí incluye `legal`.
 
 ## Riesgos identificados
 

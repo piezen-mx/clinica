@@ -414,10 +414,15 @@ export async function deleteCertificate(orgId: string): Promise<ActionResult<Org
     const uid = orgIdCheck.data;
     await assertOwnedOrganization(uid, id_empresa);
 
-    const org = await getRootClient().organizations.deleteCertificate(uid);
+    await getRootClient().organizations.deleteCertificate(uid);
 
-    // Mismo refresco que `uploadCertificate`: sea cual sea el RFC que Facturapi
-    // reporte tras quitar el certificado, la copia local debe reflejarlo (spec 33).
+    // A diferencia de `uploadCertificate`, la respuesta de `deleteCertificate` no
+    // trae `legal` (el SDK la tipa como `Organization` completo, pero el endpoint
+    // de borrado no lo incluye) — se vuelve a consultar con `retrieve` para obtener
+    // los datos legales actualizados, sea cual sea el RFC que Facturapi reporte tras
+    // quitar el certificado.
+    const org = await getRootClient().organizations.retrieve(uid);
+
     await db.transaction(async (tx) => {
       await updateOrganizationLegalRecord(tx, uid, id_empresa, organizationLegalFromFacturapi(org));
       await writeAuditEntry(tx, {
