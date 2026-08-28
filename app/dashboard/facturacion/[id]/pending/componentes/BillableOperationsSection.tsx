@@ -7,6 +7,7 @@ import { useSucursal } from "@/contexts/SucursalContext";
 import { IBillableOperation } from "@/interfaces/organization";
 import { IUser } from "@/interfaces/user";
 import { getPodologosBySucursal } from "@/app/dashboard/pacientes/[id]/expediente/actions";
+import { addZeroToday } from "@/utils/date_helpper";
 import { getBillableOperationsAction } from "../actions";
 import BillableOperationRow from "./BillableOperationRow";
 
@@ -24,7 +25,11 @@ interface FiltersState {
   search: string;
 }
 
-const EMPTY_FILTERS: FiltersState = { dateFrom: "", dateTo: "", idPodologo: "", search: "" };
+/** Filtros por defecto: la pestaña abre mostrando solo los cobros del día en curso. */
+const getDefaultFilters = (): FiltersState => {
+  const today = addZeroToday(new Date());
+  return { dateFrom: today, dateTo: today, idPodologo: "", search: "" };
+};
 
 const selectClass =
   "rounded-lg border border-[#c4c6d0] dark:border-zinc-600 bg-[#eff4ff] dark:bg-zinc-800 px-3 py-2 text-sm text-[#0b1c30] dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-[#0051d5] focus:border-[#0051d5]";
@@ -46,7 +51,7 @@ export default function BillableOperationsSection({
   const { selectedId: idSucursal } = useSucursal();
   const [operations, setOperations] = useState<IBillableOperation[]>([]);
   const [podologists, setPodologists] = useState<IUser[]>([]);
-  const [filters, setFilters] = useState<FiltersState>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<FiltersState>(getDefaultFilters);
   const [isLoading, startLoading] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
