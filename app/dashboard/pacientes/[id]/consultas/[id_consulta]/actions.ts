@@ -808,7 +808,18 @@ export async function getConsultaProductos(
  * stock actual en `id_sucursal` (ver spec 16/17) — reemplaza el catálogo legacy
  * de `dbo.productos`.
  */
-export async function getProductosCatalogo(id_sucursal: number): Promise<ISaleProduct[]> {
+export async function getProductosCatalogo(id_consulta: number): Promise<ISaleProduct[]> {
+  const consultaRows = await db.queryParams(
+    `SELECT [id_sucursal]
+       FROM [CentroPodologico].[dbo].[consultas]
+      WHERE [id_consulta] = @id_consulta`,
+    { id_consulta },
+  );
+  if (consultaRows.length === 0) {
+    throw new Error("La consulta no existe");
+  }
+  const id_sucursal = Number(consultaRows[0].id_sucursal);
+
   return getSaleProducts(id_sucursal);
 }
 
