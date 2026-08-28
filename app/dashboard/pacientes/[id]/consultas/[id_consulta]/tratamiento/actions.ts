@@ -96,7 +96,7 @@ export async function saveTratamiento(
   id_consulta:  number,
   tratamiento:  TratamientoFormData,
   pago:         PagoFormData,
-): Promise<{ ok: boolean; message?: string; id_tratamiento?: number; especialistaTelefono?: string | null; nombreEspecialista?: string; nombrePaciente?: string; createdAt?: string }> {
+): Promise<{ ok: boolean; message?: string; id_tratamiento?: number; especialistaTelefono?: string | null; nombreEspecialista?: string; nombrePaciente?: string; createdAt?: string; nombreSucursal?: string | null }> {
   try {
     const { id_user } = await getActiveUser();
     const created_at  = buildDate(new Date());
@@ -166,11 +166,13 @@ export async function saveTratamiento(
               CONVERT(varchar(19), t.[created_at], 120) AS created_at,
               u.[telefono],
               u.[nombre] AS nombre_especialista,
-              p.[nombre] + ' ' + ISNULL(p.[apellido_paterno],'') + ' ' + ISNULL(p.[apellido_materno],'') AS nombre_paciente
+              p.[nombre] + ' ' + ISNULL(p.[apellido_paterno],'') + ' ' + ISNULL(p.[apellido_materno],'') AS nombre_paciente,
+              s.[nombre] AS nombre_sucursal
          FROM [CentroPodologico].[dbo].[Tratamiento_onicomicosis] t
          JOIN [CentroPodologico].[dbo].[Consultas] c ON c.[id_consulta] = t.[id_consulta]
          JOIN [CentroPodologico].[dbo].[pacientes] p ON p.[id_paciente] = c.[id_paciente]
          LEFT JOIN [CentroPodologico].[dbo].[users] u ON u.[id_user] = t.[id_especialista]
+         LEFT JOIN [CentroPodologico].[dbo].[sucursales] s ON s.[id_sucursal] = c.[id_sucursal]
         WHERE t.[id_consulta] = @id_consulta
         ORDER BY t.[id_tratamiento] DESC`,
       { id_consulta },
@@ -184,6 +186,7 @@ export async function saveTratamiento(
       nombreEspecialista:    row?.nombre_especialista?.trim() ?? undefined,
       nombrePaciente:        row?.nombre_paciente?.trim() ?? undefined,
       createdAt:             row ? String(row.created_at) : undefined,
+      nombreSucursal:        row?.nombre_sucursal ?? null,
     };
   } catch (e) {
     console.error(e);
