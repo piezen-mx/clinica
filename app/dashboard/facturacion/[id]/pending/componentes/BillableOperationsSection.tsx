@@ -140,7 +140,7 @@ export default function BillableOperationsSection({
             ))}
           </select>
         </label>
-        <div className="relative flex-1 min-w-[220px]">
+        <div className="relative flex-1 min-w-55">
           <span className={`${filterLabelClass} block mb-1`}>Paciente o WhatsApp</span>
           <div className="relative">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#747780] dark:text-zinc-500" />

@@ -1040,3 +1040,42 @@ GO
 -- spec 34 -- facturacion de consultas y tratamientos
 ALTER TABLE [CentroPodologico].[BILLING].[organizations]
   ADD [default_product_id] NVARCHAR(50) NULL; -- producto de Facturapi usado como concepto unico al facturar cobros
+
+-- spec 35 — ventas con múltiples productos por ticket
+DROP TABLE [CentroPodologico].[dbo].[Ventas];
+GO
+CREATE TABLE [CentroPodologico].[dbo].[Ventas](
+	[id_venta]     [int] NOT NULL,
+	[id_sucursal]  [int] NOT NULL,
+	[idMetodoPago] [int] NOT NULL,
+	[total]        [decimal](18, 2) NOT NULL DEFAULT 0,
+	[created_at]   [datetime] NOT NULL,
+	[id_usuario]   [int] NOT NULL,
+	[status]       [bit] NOT NULL DEFAULT 1,
+	[webid]        [varchar](50) NOT NULL,
+	[facturado]    [bit] NOT NULL DEFAULT 0,
+	[uuid_cfdi]    [varchar](50) NULL,
+ CONSTRAINT [PK_Ventas] PRIMARY KEY CLUSTERED ([id_venta] ASC)
+) ON [PRIMARY]
+GO
+CREATE UNIQUE INDEX [UQ_Ventas_webid] ON [CentroPodologico].[dbo].[Ventas] ([webid] ASC)
+GO
+
+CREATE TABLE [CentroPodologico].[dbo].[VentasDetalle](
+	[id_venta_detalle] [int] IDENTITY(1,1) NOT NULL,
+	[id_venta]         [int] NOT NULL,
+	[id_producto]      [int] NOT NULL,
+	[cantidad]         [decimal](18, 4) NOT NULL,
+	[precio_unitario]  [decimal](18, 2) NOT NULL,  -- snapshot de ISaleProduct.effective_price al guardar
+	[subtotal]         [decimal](18, 2) NOT NULL,  -- cantidad * precio_unitario
+	[created_at]       [datetime] NOT NULL,
+ CONSTRAINT [PK_VentasDetalle] PRIMARY KEY CLUSTERED ([id_venta_detalle] ASC)
+) ON [PRIMARY]
+GO
+ALTER TABLE [CentroPodologico].[dbo].[VentasDetalle] WITH CHECK ADD CONSTRAINT [FK_VentasDetalle_Ventas]
+	FOREIGN KEY([id_venta]) REFERENCES [CentroPodologico].[dbo].[Ventas] ([id_venta])
+GO
+ALTER TABLE [CentroPodologico].[dbo].[VentasDetalle] CHECK CONSTRAINT [FK_VentasDetalle_Ventas]
+GO
+CREATE INDEX [IX_VentasDetalle_id_venta] ON [CentroPodologico].[dbo].[VentasDetalle] ([id_venta] ASC)
+GO

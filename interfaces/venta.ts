@@ -1,8 +1,15 @@
+export interface IVentaDetalle {
+  id_venta_detalle: number;
+  id_producto:      number;
+  nombre_producto?: string;   // joined
+  cantidad:         number;
+  precio_unitario:  number;
+  subtotal:         number;
+}
+
 export interface IVenta {
   id_venta:            number;
-  id_producto:         number;
   id_sucursal:         number;
-  cantidad:            number;
   idMetodoPago:        number;
   total:               number;
   created_at:          string;
@@ -11,7 +18,7 @@ export interface IVenta {
   webid:               string | null;
   facturado:           number | null;
   uuid_cfdi:           string | null;
+  lineas:              IVentaDetalle[];
   // joined
-  nombre_producto?:    string;
   descripcion_metodo?: string;
 }

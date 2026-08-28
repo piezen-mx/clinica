@@ -40,6 +40,11 @@ export default function VentaFila({ venta: v, onEdit, onDeleted }: Props) {
     });
   };
 
+  // Resumen compacto de las líneas del ticket, ej. "Curitas x2, Alcohol x1".
+  const resumenProductos = v.lineas
+    .map((linea) => `${linea.nombre_producto ?? `#${linea.id_producto}`} x${linea.cantidad}`)
+    .join(", ");
+
   return (
     <>
       <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
@@ -47,10 +52,7 @@ export default function VentaFila({ venta: v, onEdit, onDeleted }: Props) {
           {fmtDatetime(v.created_at)}
         </td>
         <td className="px-4 py-3 text-zinc-800 dark:text-zinc-100 text-sm">
-          {v.nombre_producto ?? `#${v.id_producto}`}
-        </td>
-        <td className="px-4 py-3 text-zinc-800 dark:text-zinc-100 text-sm ">
-          {v.cantidad}
+          {resumenProductos || "—"}
         </td>
         <td className="px-4 py-3 text-zinc-800 dark:text-zinc-100 text-sm">
           {v.descripcion_metodo ?? "—"}
@@ -89,7 +91,7 @@ export default function VentaFila({ venta: v, onEdit, onDeleted }: Props) {
 
       {showConfirm && (
         <ConfirmModal
-          message={`¿Deseas eliminar la venta de "${v.nombre_producto ?? `#${v.id_venta}`}" por ${fmtCurrency(v.total)}? Se marcará como inactiva.`}
+          message={`¿Deseas eliminar el ticket "${resumenProductos || `#${v.id_venta}`}" por ${fmtCurrency(v.total)}? Se marcará como inactivo.`}
           onConfirm={handleConfirmDelete}
           onCancel={() => setShowConfirm(false)}
           loading={deleting}
