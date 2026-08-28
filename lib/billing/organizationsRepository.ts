@@ -45,6 +45,7 @@ const ORGANIZATION_SELECT_COLUMNS = `
   [municipality],
   [state],
   [country],
+  [default_product_id],
   CONVERT(varchar(19), [created_at], 120) AS created_at,
   CONVERT(varchar(19), [updated_at], 120) AS updated_at,
   CASE WHEN [test_key] IS NULL THEN 0 ELSE 1 END AS has_test_key,
@@ -159,6 +160,7 @@ export async function insertOrganization(
        INSERTED.[municipality],
        INSERTED.[state],
        INSERTED.[country],
+       INSERTED.[default_product_id],
        CONVERT(varchar(19), INSERTED.[created_at], 120) AS created_at,
        CONVERT(varchar(19), INSERTED.[updated_at], 120) AS updated_at,
        CASE WHEN INSERTED.[test_key] IS NULL THEN 0 ELSE 1 END AS has_test_key,
@@ -306,6 +308,32 @@ export async function setLiveKey(
     throw new Error("La organización no existe o no pertenece a esta empresa");
   }
   return plainKey ? plainKey.slice(0, 12) : null;
+}
+
+/**
+ * Guarda el `id` del producto de Facturapi usado como concepto único al facturar
+ * cobros desde la pestaña Por facturar (spec 34). `productId` puede ser `null`
+ * para limpiar la configuración.
+ */
+export async function setDefaultProduct(
+  client: ITransactionClient,
+  uid: string,
+  idEmpresa: number,
+  productId: string | null
+): Promise<void> {
+  const now = buildDate(new Date());
+
+  const rows = await client.queryParams(
+    `UPDATE ${SCHEMA_TABLE_ORGANIZATIONS}
+        SET [default_product_id] = @default_product_id, [updated_at] = @updated_at
+      OUTPUT INSERTED.[id]
+      WHERE [uid] = @uid AND [id_empresa] = @idEmpresa`,
+    { uid, idEmpresa, default_product_id: productId, updated_at: now }
+  );
+
+  if (rows.length === 0) {
+    throw new Error("La organización no existe o no pertenece a esta empresa");
+  }
 }
 
 /**

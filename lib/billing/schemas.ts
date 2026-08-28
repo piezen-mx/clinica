@@ -437,3 +437,36 @@ export const OrganizationCustomizationSchema = z.object({
 });
 
 export type OrganizationCustomizationInput = z.infer<typeof OrganizationCustomizationSchema>;
+
+/**
+ * `id` del producto de Facturapi guardado como concepto único al facturar cobros
+ * (spec 34). `orgId` no forma parte del schema, mismo criterio que `ProductSchema`.
+ * Acepta `null` para permitir limpiar la configuración.
+ */
+export const SetDefaultProductSchema = z.object({
+  productId: z.string().trim().min(1, "Selecciona un producto").nullable(),
+});
+
+export type SetDefaultProductInput = z.infer<typeof SetDefaultProductSchema>;
+
+/** Los tres orígenes de una operación cobrable de la pestaña Por facturar (spec 34). */
+const BillableSourceEnum = z.enum(["consulta", "tratamiento_revision", "tratamiento"], {
+  error: () => "Origen de operación inválido",
+});
+
+/**
+ * Captura del modal de facturación de un cobro (`ICreateBillableInvoiceInput`,
+ * spec 34). **No incluye importe, forma de pago, producto ni `mode`** — los
+ * cuatro se resuelven en el servidor (`resolveBillableOperation`, `default_product_id`,
+ * `getOrgClient`), el mismo criterio que `CreateInvoiceSchema` aplica a `mode`.
+ * `source_id` solo identifica la operación a revalidar; nunca es el importe.
+ */
+export const CreateBillableInvoiceSchema = z.object({
+  source: BillableSourceEnum,
+  source_id: z.number().int().positive("La operación no es válida"),
+  customer_id: requiredText("El cliente", 255),
+  description: requiredText("El concepto", 255),
+  use: satCatalog(InvoiceUse, "El uso del CFDI"),
+});
+
+export type CreateBillableInvoiceInput = z.infer<typeof CreateBillableInvoiceSchema>;

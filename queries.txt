@@ -1036,3 +1036,7 @@ GO
 -- Catálogo de valores de [action] (se amplía en los specs 29-31):
 -- org.create, org.update_legal, org.delete, cert.upload, cert.delete,
 -- key.renew_test, key.renew_live, key.revoke_live
+
+-- spec 34 -- facturacion de consultas y tratamientos
+ALTER TABLE [CentroPodologico].[BILLING].[organizations]
+  ADD [default_product_id] NVARCHAR(50) NULL; -- producto de Facturapi usado como concepto unico al facturar cobros
