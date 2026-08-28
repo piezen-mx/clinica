@@ -58,7 +58,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-3 gap-2">
       <span className="font-semibold text-[#44474f] dark:text-zinc-400 col-span-1">{label}:</span>
-      <span className="text-[#0b1c30] dark:text-zinc-100 col-span-2 break-words">{value || "—"}</span>
+      <span className="text-[#0b1c30] dark:text-zinc-100 col-span-2 wrap-break-word">{value || "—"}</span>
     </div>
   );
 }
