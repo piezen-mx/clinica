@@ -11,12 +11,10 @@ import VentaModal from "./componentes/VentaModal";
 import { SucursalName } from "../componentes/SucursalName";
 
 const EMPTY: VentaForm = {
-  id_venta:    0,
-  id_producto: 0,
-  id_sucursal: 0,
-  cantidad:    1,
+  id_venta:     0,
+  id_sucursal:  0,
   idMetodoPago: 0,
-  total:       0,
+  lineas:       [],
 };
 
 export default function VentasPage() {
@@ -63,34 +61,56 @@ export default function VentasPage() {
 
   const openEdit = (v: IVenta) => {
     setForm({
-      id_venta:    v.id_venta,
-      id_producto: v.id_producto,
-      id_sucursal: v.id_sucursal,
-      cantidad:    v.cantidad,
+      id_venta:     v.id_venta,
+      id_sucursal:  v.id_sucursal,
       idMetodoPago: v.idMetodoPago,
-      total:       v.total,
+      lineas: v.lineas.map((linea) => ({
+        id_venta_detalle: linea.id_venta_detalle,
+        id_producto:      linea.id_producto,
+        cantidad:         linea.cantidad,
+      })),
     });
     setError(null);
     setShowModal(true);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    const numericFields = ["cantidad", "total", "idMetodoPago", "id_producto"];
+  // Agregar un producto ya presente en el carrito suma la cantidad a su línea
+  // existente en vez de duplicarla (ver spec 35).
+  const addLinea = (id_producto: number, cantidad: number) => {
     setForm((prev) => {
-      const next: VentaForm = {
-        ...prev,
-        [name]: numericFields.includes(name) ? Number(value) : value,
-      };
-      // Auto-calculate total when producto or cantidad changes
-      if (name === "id_producto" || name === "cantidad") {
-        const prodId = name === "id_producto" ? Number(value) : prev.id_producto;
-        const qty    = name === "cantidad"    ? Number(value) : prev.cantidad;
-        const prod   = productos.find((p) => p.id_product === prodId);
-        if (prod) next.total = parseFloat((prod.effective_price * qty).toFixed(2));
+      const existente = prev.lineas.find((linea) => linea.id_producto === id_producto);
+      if (existente) {
+        return {
+          ...prev,
+          lineas: prev.lineas.map((linea) =>
+            linea.id_producto === id_producto
+              ? { ...linea, cantidad: linea.cantidad + cantidad }
+              : linea
+          ),
+        };
       }
-      return next;
+      return { ...prev, lineas: [...prev.lineas, { id_producto, cantidad }] };
     });
+  };
+
+  const removeLinea = (id_producto: number) => {
+    setForm((prev) => ({
+      ...prev,
+      lineas: prev.lineas.filter((linea) => linea.id_producto !== id_producto),
+    }));
+  };
+
+  const updateLineaCantidad = (id_producto: number, cantidad: number) => {
+    setForm((prev) => ({
+      ...prev,
+      lineas: prev.lineas.map((linea) =>
+        linea.id_producto === id_producto ? { ...linea, cantidad } : linea
+      ),
+    }));
+  };
+
+  const setMetodoPago = (idMetodoPago: number) => {
+    setForm((prev) => ({ ...prev, idMetodoPago }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,7 +180,7 @@ export default function VentasPage() {
         <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
           <thead className="bg-zinc-50 dark:bg-zinc-800">
             <tr>
-              {["Fecha", "Producto", "Cant.", "Método pago", "Total", "Facturado", ""].map((h) => (
+              {["Fecha", "Productos", "Método pago", "Total", "Facturado", ""].map((h) => (
                 <th
                   key={h}
                   className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
@@ -173,13 +193,13 @@ export default function VentasPage() {
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-zinc-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-zinc-400">
                   Cargando…
                 </td>
               </tr>
             ) : ventas.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-zinc-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-zinc-400">
                   Sin registros en el período seleccionado.
                 </td>
               </tr>
@@ -204,7 +224,10 @@ export default function VentasPage() {
           metodosPagos={metodos}
           saving={saving}
           error={error}
-          onChange={handleChange}
+          onAddLinea={addLinea}
+          onRemoveLinea={removeLinea}
+          onUpdateLineaCantidad={updateLineaCantidad}
+          onMetodoPagoChange={setMetodoPago}
           onSubmit={handleSubmit}
           onClose={() => setShowModal(false)}
         />
