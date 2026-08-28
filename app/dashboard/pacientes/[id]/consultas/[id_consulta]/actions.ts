@@ -750,6 +750,18 @@ export async function selectServicioOpcion(
       return { ok: true, data: null };
     }
 
+    const matchRows = await db.queryParams(
+      `SELECT so.[id_servicio_opcion]
+         FROM [CentroPodologico].[dbo].[servicio_opciones] so
+         JOIN [CentroPodologico].[dbo].[consultas] c ON c.[id_sucursal] = so.[id_sucursal]
+        WHERE so.[id_servicio_opcion] = @id_servicio_opcion
+          AND c.[id_consulta] = @id_consulta`,
+      { id_servicio_opcion, id_consulta },
+    );
+    if (matchRows.length === 0) {
+      return { ok: false, data: "Esta opción no pertenece a la sucursal de la consulta" };
+    }
+
     const result = await db.queryParams(
       `INSERT INTO [CentroPodologico].[dbo].[consulta_servicios]
          ([id_consulta_servicio],[id_consulta],[id_servicio_opcion],[precio_aplicado])
