@@ -17,7 +17,6 @@ import {
 } from "./actions";
 import PagoTratamientoForm from "./componentes/PagoTratamientoForm";
 import TratamientoForm from "./componentes/TratamientoForm";
-import { useSucursal } from "@/contexts/SucursalContext";
 
 const TRATAMIENTO_DEFAULTS: TratamientoFormData = {
   peso:                   "",
@@ -37,8 +36,6 @@ const PAGO_DEFAULTS: PagoFormData = {
 };
 
 export default function TratamientoPage() {
-  const { selectedId, sucursales } = useSucursal();
-  const sucursal = sucursales.find((s) => s.id_sucursal === selectedId);
   const router       = useRouter();
   const params       = useParams();
   const id_paciente  = Number(params.id);
@@ -144,7 +141,7 @@ export default function TratamientoPage() {
       const msg = [
         `Hola ${result.nombreEspecialista ?? "especialista"}`,
         `Usted tiene un nuevo tratamiento de ${result.nombrePaciente ?? "Paciente"}${fechaFmt ? `, ${fechaFmt}` : ""}.`,
-        `Sucursal: ${sucursal?.nombre ?? "Desconocida"}.`,
+        `Sucursal: ${result.nombreSucursal ?? "Desconocida"}.`,
         `Favor de revisar la página de Piezen.`,
       ].join("\n");
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
