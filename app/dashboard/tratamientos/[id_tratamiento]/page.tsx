@@ -22,7 +22,6 @@ import AccordionRecetas from "./componentes/AccordionRecetas";
 import AccordionConsultas from "./componentes/AccordionConsultas";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useSucursal } from "@/contexts/SucursalContext";
 import { ICita } from "@/interfaces/cita";
 import { IConsulta } from "@/interfaces/consulta";
 import { IPaciente } from "@/interfaces/paciente";
@@ -42,6 +41,7 @@ type DetailRow = ITratamientoOnicomicosis & {
   nombre_sucursal:     string | null;
   id_paciente:         number;
   id_podologo:         number;
+  id_sucursal:         number;
   whatsapp:            string | null;
   phone_code:          string | null;
   edad_paciente:       number | null;
@@ -110,7 +110,6 @@ export default function TratamientoDetallePage({ params }: Props) {
   const router = useRouter();
 
   const { user }                          = useAuth();
-  const { selectedId }                    = useSucursal();
 
   const [detalle, setDetalle]   = useState<DetailRow | null>(null);
   const [marking, setMarking]   = useState(false);
@@ -179,7 +178,7 @@ export default function TratamientoDetallePage({ params }: Props) {
       ...EMPTY_CONSULTA,
       id_paciente:    detalle.id_paciente,
       id_podologo:    user?.id_role === 2 ? user.id_user : detalle.id_podologo,
-      id_sucursal:    selectedId || user!.id_sucursal,
+      id_sucursal:    detalle.id_sucursal,
       id_empresa:     user!.id_empresa,
       id_tratamiento: id_tratamiento,
     });
@@ -239,7 +238,7 @@ export default function TratamientoDetallePage({ params }: Props) {
       id_podologo:    detalle.id_podologo,
       id_tratamiento: id_tratamiento,
       id_consulta:    undefined,
-      id_sucursal:    selectedId || user!.id_sucursal,
+      id_sucursal:    detalle.id_sucursal,
       id_empresa:     user!.id_empresa,
     });
     setErrorCita(null);

@@ -9,7 +9,6 @@ import {
 import { ISaleProduct } from "@/app/dashboard/ventas/actions";
 import AddProductoForm from "./AddProductoForm";
 import ProductoRow from "./ProductoRow";
-import { useSucursal } from "@/contexts/SucursalContext";
 
 interface Props {
   id_consulta:   number;
@@ -21,7 +20,6 @@ interface Props {
 const HEADERS = ["Producto", "Cantidad", "Precio unit.", "Subtotal", ""];
 
 export default function TabProductos({ id_consulta, locked, onContinuar, onTotalChange }: Props) {
-  const { selectedId: id_sucursal } = useSucursal();
   const [productos, setProductos] = useState<ConsultaProductoExtended[]>([]);
   const [catalogo,  setCatalogo ] = useState<ISaleProduct[]>([]);
   const [loading,   setLoading  ] = useState(true);
@@ -32,7 +30,7 @@ export default function TabProductos({ id_consulta, locked, onContinuar, onTotal
     setLoading(true);
     Promise.all([
       getConsultaProductos(id_consulta),
-      getProductosCatalogo(id_sucursal),
+      getProductosCatalogo(id_consulta),
     ]).then(([cp, cat]) => {
       if (cancelled) return;
       setProductos(cp);

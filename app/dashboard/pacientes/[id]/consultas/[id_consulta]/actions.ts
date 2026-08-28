@@ -646,11 +646,22 @@ export interface ServicioConOpciones extends IServicio {
   opciones: IServicioOpcion[];
 }
 
-export async function getServiciosTabData(id_consulta: number, id_sucursal: number): Promise<{
+export async function getServiciosTabData(id_consulta: number): Promise<{
   servicios:         ServicioConOpciones[];
   consultaServicios: IConsultaServicio[];
 }> {
   const id_empresa = await getIdEmpresa();
+
+  const consultaRows = await db.queryParams(
+    `SELECT [id_sucursal]
+       FROM [CentroPodologico].[dbo].[consultas]
+      WHERE [id_consulta] = @id_consulta`,
+    { id_consulta },
+  );
+  if (consultaRows.length === 0) {
+    throw new Error("La consulta no existe");
+  }
+  const id_sucursal = Number(consultaRows[0].id_sucursal);
 
   const [rows, csRows] = await Promise.all([
     db.queryParams(
@@ -739,6 +750,18 @@ export async function selectServicioOpcion(
       return { ok: true, data: null };
     }
 
+    const matchRows = await db.queryParams(
+      `SELECT so.[id_servicio_opcion]
+         FROM [CentroPodologico].[dbo].[servicio_opciones] so
+         JOIN [CentroPodologico].[dbo].[consultas] c ON c.[id_sucursal] = so.[id_sucursal]
+        WHERE so.[id_servicio_opcion] = @id_servicio_opcion
+          AND c.[id_consulta] = @id_consulta`,
+      { id_servicio_opcion, id_consulta },
+    );
+    if (matchRows.length === 0) {
+      return { ok: false, data: "Esta opción no pertenece a la sucursal de la consulta" };
+    }
+
     const result = await db.queryParams(
       `INSERT INTO [CentroPodologico].[dbo].[consulta_servicios]
          ([id_consulta_servicio],[id_consulta],[id_servicio_opcion],[precio_aplicado])
@@ -785,7 +808,18 @@ export async function getConsultaProductos(
  * stock actual en `id_sucursal` (ver spec 16/17) — reemplaza el catálogo legacy
  * de `dbo.productos`.
  */
-export async function getProductosCatalogo(id_sucursal: number): Promise<ISaleProduct[]> {
+export async function getProductosCatalogo(id_consulta: number): Promise<ISaleProduct[]> {
+  const consultaRows = await db.queryParams(
+    `SELECT [id_sucursal]
+       FROM [CentroPodologico].[dbo].[consultas]
+      WHERE [id_consulta] = @id_consulta`,
+    { id_consulta },
+  );
+  if (consultaRows.length === 0) {
+    throw new Error("La consulta no existe");
+  }
+  const id_sucursal = Number(consultaRows[0].id_sucursal);
+
   return getSaleProducts(id_sucursal);
 }
 

@@ -165,6 +165,7 @@ export async function getTratamientoDetalle(
   nombre_sucursal:     string | null;
   id_paciente:         number;
   id_podologo:         number;
+  id_sucursal:         number;
   whatsapp:            string | null;
   phone_code:          string | null;
   edad_paciente:       number | null;
@@ -187,6 +188,7 @@ export async function getTratamientoDetalle(
             t.[message],
             c.[id_paciente] AS id_paciente,
             c.[id_podologo] AS id_podologo,
+            c.[id_sucursal] AS id_sucursal,
             LTRIM(RTRIM(
               p.[nombre] + ' ' + p.[apellido_paterno]
               + CASE WHEN p.[apellido_materno] IS NOT NULL AND p.[apellido_materno] <> ''
@@ -226,6 +228,7 @@ export async function getTratamientoDetalle(
     nombre_sucursal:     string | null;
     id_paciente:         number;
     id_podologo:         number;
+    id_sucursal:         number;
     whatsapp:            string | null;
     phone_code:          string | null;
     edad_paciente:       number | null;
