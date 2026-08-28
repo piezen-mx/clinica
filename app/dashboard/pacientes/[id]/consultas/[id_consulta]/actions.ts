@@ -646,11 +646,22 @@ export interface ServicioConOpciones extends IServicio {
   opciones: IServicioOpcion[];
 }
 
-export async function getServiciosTabData(id_consulta: number, id_sucursal: number): Promise<{
+export async function getServiciosTabData(id_consulta: number): Promise<{
   servicios:         ServicioConOpciones[];
   consultaServicios: IConsultaServicio[];
 }> {
   const id_empresa = await getIdEmpresa();
+
+  const consultaRows = await db.queryParams(
+    `SELECT [id_sucursal]
+       FROM [CentroPodologico].[dbo].[consultas]
+      WHERE [id_consulta] = @id_consulta`,
+    { id_consulta },
+  );
+  if (consultaRows.length === 0) {
+    throw new Error("La consulta no existe");
+  }
+  const id_sucursal = Number(consultaRows[0].id_sucursal);
 
   const [rows, csRows] = await Promise.all([
     db.queryParams(
