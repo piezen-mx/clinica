@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** Ninguno directamente (toca el mismo dominio de `consulta_servicios`/`consulta_productos` que specs 13/17, pero no modifica su esquema ni su lógica de stock)
 - **Modifica base de datos:** No
 - **Fecha:** 2026-08-28
@@ -62,16 +62,16 @@ Este spec no introduce estructuras de datos nuevas ni cambia el esquema — solo
 
 ## Criterios de aceptación
 
-- [ ] `getServiciosTabData` y `getProductosCatalogo` ya no reciben `id_sucursal` como parámetro del cliente; ambas lo resuelven internamente con un `SELECT` contra `consultas.id_sucursal` usando `id_consulta`.
-- [ ] `TabServicios.tsx` y `TabProductos.tsx` ya no importan ni usan `useSucursal()`/`SucursalContext`.
-- [ ] Con una consulta abierta en la Sucursal A, cambiar la sucursal activa a B desde el sidebar **no cambia** el catálogo de servicios ni el catálogo/stock de productos mostrado en esas pestañas — siguen reflejando la Sucursal A.
-- [ ] `selectServicioOpcion` rechaza (`ok: false`, sin insertar) una selección cuyo `id_servicio_opcion` pertenezca a una sucursal distinta a la de la consulta, con un mensaje explícito que el tab muestra al usuario.
-- [ ] Ningún `consulta_servicios` u operación de `consulta_productos` puede quedar ligado a una opción/consumo de una sucursal distinta a `consultas.id_sucursal` de esa consulta, sin importar qué sucursal esté activa en `SucursalContext` al momento de guardar.
-- [ ] El mensaje de WhatsApp enviado al especialista al crear un tratamiento reporta la sucursal de la consulta de origen, no la sucursal activa en `SucursalContext`; `saveTratamiento` resuelve `nombreSucursal` en servidor.
-- [ ] Al abrir "Crear consulta" o "Crear cita" desde `dashboard/tratamientos/[id]`, el formulario preselecciona la sucursal del tratamiento (vía su consulta origen), no la sucursal activa; el selector de sucursal del modal sigue siendo editable.
-- [ ] `getTratamientoDetalle` expone `id_sucursal` en su resultado.
-- [ ] `dashboard/tratamientos/[id_tratamiento]/page.tsx` ya no importa `useSucursal()`.
-- [ ] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
+- [x] `getServiciosTabData` y `getProductosCatalogo` ya no reciben `id_sucursal` como parámetro del cliente; ambas lo resuelven internamente con un `SELECT` contra `consultas.id_sucursal` usando `id_consulta`.
+- [x] `TabServicios.tsx` y `TabProductos.tsx` ya no importan ni usan `useSucursal()`/`SucursalContext`.
+- [x] Con una consulta abierta en la Sucursal A, cambiar la sucursal activa a B desde el sidebar **no cambia** el catálogo de servicios ni el catálogo/stock de productos mostrado en esas pestañas — siguen reflejando la Sucursal A.
+- [x] `selectServicioOpcion` rechaza (`ok: false`, sin insertar) una selección cuyo `id_servicio_opcion` pertenezca a una sucursal distinta a la de la consulta, con un mensaje explícito que el tab muestra al usuario.
+- [x] Ningún `consulta_servicios` u operación de `consulta_productos` puede quedar ligado a una opción/consumo de una sucursal distinta a `consultas.id_sucursal` de esa consulta, sin importar qué sucursal esté activa en `SucursalContext` al momento de guardar.
+- [x] El mensaje de WhatsApp enviado al especialista al crear un tratamiento reporta la sucursal de la consulta de origen, no la sucursal activa en `SucursalContext`; `saveTratamiento` resuelve `nombreSucursal` en servidor.
+- [x] Al abrir "Crear consulta" o "Crear cita" desde `dashboard/tratamientos/[id]`, el formulario preselecciona la sucursal del tratamiento (vía su consulta origen), no la sucursal activa; el selector de sucursal del modal sigue siendo editable.
+- [x] `getTratamientoDetalle` expone `id_sucursal` en su resultado.
+- [x] `dashboard/tratamientos/[id_tratamiento]/page.tsx` ya no importa `useSucursal()`.
+- [x] `npm run build` y `npm run lint` compilan sin errores ni warnings nuevos.
 
 ## Decisiones tomadas y descartadas
 
