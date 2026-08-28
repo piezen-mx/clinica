@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import type { Customer } from "facturapi";
@@ -42,6 +43,18 @@ const formatCurrency = (amount: number) =>
  * manda a `createBillableInvoiceAction`**: la action los vuelve a recalcular
  * contra la base de datos (`resolveBillableOperation`) antes de timbrar, así
  * que lo que aquí se ve es una vista previa, no el dato que decide el importe.
+ *
+ * Se abre desde `BillableOperationRow`, que vive dentro de un `<tbody>` — sin
+ * portal, el `<div>` de este modal quedaría anidado ahí, HTML inválido que
+ * React marca como error de hidratación. `createPortal` a `document.body` lo
+ * saca del árbol de la tabla.
+ *
+ * A diferencia de `ConfirmModal.tsx`, no espera a un `useEffect` de montaje
+ * antes de invocar `createPortal`: este componente solo existe en el árbol
+ * tras un clic del usuario (`showModal` arranca en `false` en
+ * `BillableOperationRow`), nunca durante el render de servidor ni la
+ * hidratación inicial, así que `document` ya está disponible la primera vez
+ * que se monta.
  */
 export default function BillableInvoiceModal({
   orgId,
@@ -100,7 +113,7 @@ export default function BillableInvoiceModal({
     void submit();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-xl">
         <div className="flex items-center justify-between border-b border-[#c4c6d0] dark:border-zinc-700 px-6 py-4 sticky top-0 bg-white dark:bg-zinc-900 z-10">
@@ -234,6 +247,7 @@ export default function BillableInvoiceModal({
           }}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -11,7 +11,7 @@
  */
 
 import { revalidatePath } from "next/cache";
-import type { Invoice } from "facturapi";
+import type { Invoice, Product } from "facturapi";
 
 import db from "@/database/connection";
 import { ActionResult } from "@/app/actions/auth";
@@ -78,11 +78,20 @@ export async function getBillableOperationsAction(
 // Timbrado
 // ---------------------------------------------------------------------------
 
+/**
+ * Facturapi rechaza `items[0].price` cuando `product` es el `id` de un producto
+ * del catálogo — con un `id`, el precio y la descripción son los que ya tiene
+ * guardado ese producto, no se pueden sobreescribir a su lado. Para facturar el
+ * total real de la operación (que no es el precio de catálogo del producto por
+ * defecto) hay que mandar el renglón como un producto **inline**: mismo
+ * `product_key`/`unit_key`/`tax_included`/`taxes` que el producto configurado
+ * en Personalizar, pero con `price` y `description` propios de esta factura.
+ */
 function toFacturapiBillablePayload(input: {
   customerId: string;
   description: string;
   use: string;
-  productId: string;
+  defaultProduct: Product;
   price: number;
   paymentForm: string;
 }): Record<string, unknown> {
@@ -91,9 +100,14 @@ function toFacturapiBillablePayload(input: {
     items: [
       {
         quantity: 1,
-        product: input.productId,
-        price: input.price,
-        description: input.description,
+        product: {
+          description: input.description,
+          product_key: input.defaultProduct.product_key,
+          unit_key: input.defaultProduct.unit_key,
+          price: input.price,
+          tax_included: input.defaultProduct.tax_included,
+          taxes: input.defaultProduct.taxes,
+        },
       },
     ],
     payment_form: input.paymentForm,
@@ -142,12 +156,13 @@ export async function createBillableInvoiceAction(
     }
 
     const client = await getOrgClient(uid, id_empresa);
+    const defaultProduct = await client.products.retrieve(organization.default_product_id);
     const invoice = await client.invoices.create(
       toFacturapiBillablePayload({
         customerId: data.customer_id,
         description: data.description,
         use: data.use,
-        productId: organization.default_product_id,
+        defaultProduct,
         price: resolved.total,
         paymentForm: resolved.payment_form,
       })

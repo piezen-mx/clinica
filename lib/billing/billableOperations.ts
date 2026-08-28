@@ -120,7 +120,7 @@ export async function listBillableOperations(filters: IBillableOperationFilters)
             ) pf
         WHERE c.[costo_total] > 0
           AND agg.[paid] IS NOT NULL AND agg.[paid] >= c.[costo_total]
-          AND c.[deleted_at] IS NULL AND c.[cancelada] = 0
+          AND c.[deleted_at] IS NULL AND ISNULL(c.[cancelada], 0) = 0
           AND c.[id_sucursal] = @id_sucursal AND c.[id_empresa] = @id_empresa
           AND NOT EXISTS (
                 SELECT 1 FROM [CentroPodologico].[dbo].[pagos] f
@@ -157,7 +157,7 @@ export async function listBillableOperations(filters: IBillableOperationFilters)
                ORDER BY tp.[total] DESC, tp.[id_tratamiento_pago] ASC
             ) pf
         WHERE agg.[paid] IS NOT NULL AND agg.[paid] >= tt.[total]
-          AND c.[deleted_at] IS NULL AND c.[cancelada] = 0
+          AND c.[deleted_at] IS NULL AND ISNULL(c.[cancelada], 0) = 0
           AND c.[id_sucursal] = @id_sucursal AND c.[id_empresa] = @id_empresa
           AND NOT EXISTS (
                 SELECT 1 FROM [CentroPodologico].[dbo].[Tratamiento_onicomicosis_pagos] f
@@ -195,7 +195,7 @@ export async function listBillableOperations(filters: IBillableOperationFilters)
                ORDER BY tp.[total] DESC, tp.[id_tratamiento_pago] ASC
             ) pf
         WHERE agg.[paid] IS NOT NULL AND agg.[paid] >= tt.[total]
-          AND c.[deleted_at] IS NULL AND c.[cancelada] = 0
+          AND c.[deleted_at] IS NULL AND ISNULL(c.[cancelada], 0) = 0
           AND c.[id_sucursal] = @id_sucursal AND c.[id_empresa] = @id_empresa
           AND NOT EXISTS (
                 SELECT 1 FROM [CentroPodologico].[dbo].[Tratamiento_onicomicosis_pagos] f
@@ -259,7 +259,7 @@ async function resolveConsultaOperation(
     `SELECT [costo_total]
        FROM [CentroPodologico].[dbo].[consultas]
       WHERE [id_consulta] = @sourceId AND [id_empresa] = @idEmpresa AND [id_sucursal] = @idSucursal
-        AND [deleted_at] IS NULL AND [cancelada] = 0`,
+        AND [deleted_at] IS NULL AND ISNULL([cancelada], 0) = 0`,
     { sourceId, idEmpresa, idSucursal }
   );
   if (consultaRows.length === 0) return null;
@@ -302,7 +302,7 @@ async function resolveTreatmentOperation(
        JOIN [CentroPodologico].[dbo].[Tratamiento_pagos_tipos] tt ON tt.[id_tratamiento_pago_tipo] = @tipo
       WHERE t.[id_tratamiento] = @sourceId
         AND c.[id_empresa] = @idEmpresa AND c.[id_sucursal] = @idSucursal
-        AND c.[deleted_at] IS NULL AND c.[cancelada] = 0`,
+        AND c.[deleted_at] IS NULL AND ISNULL(c.[cancelada], 0) = 0`,
     { sourceId, idEmpresa, idSucursal, tipo }
   );
   if (treatmentRows.length === 0) return null;

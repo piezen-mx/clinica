@@ -5,14 +5,14 @@ import { Search } from "lucide-react";
 import type { Customer } from "facturapi";
 import { useSucursal } from "@/contexts/SucursalContext";
 import { IBillableOperation } from "@/interfaces/organization";
-import { EspecialistaOption } from "@/app/dashboard/pacientes/[id]/consultas/[id_consulta]/tratamiento/actions";
+import { IUser } from "@/interfaces/user";
+import { getPodologosBySucursal } from "@/app/dashboard/pacientes/[id]/expediente/actions";
 import { getBillableOperationsAction } from "../actions";
 import BillableOperationRow from "./BillableOperationRow";
 
 interface Props {
   orgId: string;
   customers: Customer[];
-  podologists: EspecialistaOption[];
   hasDefaultProduct: boolean;
   isLive: boolean;
 }
@@ -40,12 +40,12 @@ const filterLabelClass = "text-xs font-medium text-[#44474f] dark:text-zinc-400"
 export default function BillableOperationsSection({
   orgId,
   customers,
-  podologists,
   hasDefaultProduct,
   isLive,
 }: Props) {
   const { selectedId: idSucursal } = useSucursal();
   const [operations, setOperations] = useState<IBillableOperation[]>([]);
+  const [podologists, setPodologists] = useState<IUser[]>([]);
   const [filters, setFilters] = useState<FiltersState>(EMPTY_FILTERS);
   const [isLoading, startLoading] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +77,11 @@ export default function BillableOperationsSection({
 
   useEffect(() => {
     fetchOperations(filters);
+    // Los podólogos del filtro son por sucursal (`getPodologosBySucursal`, rol
+    // "Podologo" = id_role 2 — no confundir con "Especialista" = id_role 5,
+    // que es quien atiende un tratamiento de onicomicosis), así que se vuelven
+    // a pedir cada vez que cambia la sucursal activa, igual que el listado.
+    getPodologosBySucursal(idSucursal).then(setPodologists);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idSucursal]);
 

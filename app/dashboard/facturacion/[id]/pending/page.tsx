@@ -5,10 +5,6 @@ import type { Customer } from "facturapi";
 import { requireBillingAccess } from "@/lib/auth/session";
 import { getOrgClient } from "@/lib/billing/facturapiClient";
 import { toUserMessage } from "@/lib/billing/errors";
-import {
-  getEspecialistas,
-  EspecialistaOption,
-} from "@/app/dashboard/pacientes/[id]/consultas/[id_consulta]/tratamiento/actions";
 import { getOrganizationDetail } from "../../actions";
 import BillableOperationsSection from "./componentes/BillableOperationsSection";
 
@@ -20,11 +16,10 @@ interface Props {
  * Server Component: resuelve `default_product_id` (spec 34) — sin él, la
  * pestaña muestra un aviso que remite a Personalizar y no permite timbrar.
  * También trae el padrón de clientes (insumo del modal de timbrado, mismo
- * criterio que `../invoices/page.tsx`) y los podólogos activos de la empresa
- * (insumo del filtro), para que ninguno de los dos se tenga que pedir aparte.
- * El listado en sí no se pide aquí: depende de la sucursal activa
- * (`SucursalContext`, estado de cliente), así que lo pide
- * `BillableOperationsSection` por server action al montar y al cambiar filtros.
+ * criterio que `../invoices/page.tsx`). Los podólogos del filtro **no** se
+ * traen aquí: son por sucursal (`getPodologosBySucursal`) y la sucursal activa
+ * es estado de cliente (`SucursalContext`), así que `BillableOperationsSection`
+ * los pide junto con el listado, cada vez que cambia la sucursal.
  */
 export default async function OrganizationPendingPage({ params }: Props) {
   const { id } = await params;
@@ -34,17 +29,12 @@ export default async function OrganizationPendingPage({ params }: Props) {
   const { defaultProductId, isLive } = detailResult.data;
 
   let customers: Customer[] = [];
-  let podologists: EspecialistaOption[] = [];
   let errorMessage: string | null = null;
   try {
     const { id_empresa } = await requireBillingAccess();
     const client = await getOrgClient(id, id_empresa);
-    const [customersResult, podologistList] = await Promise.all([
-      client.customers.list({ limit: 50 }),
-      getEspecialistas(),
-    ]);
+    const customersResult = await client.customers.list({ limit: 50 });
     customers = customersResult.data;
-    podologists = podologistList;
   } catch (err) {
     errorMessage = toUserMessage(err);
   }
@@ -70,7 +60,6 @@ export default async function OrganizationPendingPage({ params }: Props) {
       <BillableOperationsSection
         orgId={id}
         customers={customers}
-        podologists={podologists}
         hasDefaultProduct={Boolean(defaultProductId)}
         isLive={isLive}
       />

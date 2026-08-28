@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:**
   - **Spec 28** — `BILLING.organizations`, `getOrgClient(uid, id_empresa)`, `lib/billing/schemas.ts`, `lib/billing/errors.ts`, `requireBillingAccess()` (`lib/auth/session.ts`), `ConfirmModal`, `BILLING.audit_log`, y el patrón de pestañas de `facturacion/[id]/` con un `actions.ts` por pestaña.
   - **Spec 29** — padrón de clientes de la organización en Facturapi (`[id]/customers`): este spec reusa su selección y su alta de clientes, no crea un padrón nuevo.
