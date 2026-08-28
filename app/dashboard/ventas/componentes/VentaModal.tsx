@@ -72,7 +72,7 @@ export default function VentaModal({
               <select
                 value={pickerProductId}
                 onChange={(e) => setPickerProductId(Number(e.target.value))}
-                className="flex-1 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                className="min-w-0 flex-1 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
               >
                 <option value={0} disabled>Seleccionar producto…</option>
                 {productos.map((p) => (
@@ -86,13 +86,13 @@ export default function VentaModal({
                 min={1}
                 value={pickerCantidad}
                 onChange={(e) => setPickerCantidad(Number(e.target.value))}
-                className="w-20 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                className="w-16 shrink-0 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
               />
               <button
                 type="button"
                 onClick={handleAddLinea}
                 disabled={pickerProductId === 0 || pickerCantidad <= 0}
-                className="rounded-md bg-zinc-800 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-600 dark:hover:bg-zinc-500 transition-colors disabled:opacity-60"
+                className="shrink-0 rounded-md bg-zinc-800 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-600 dark:hover:bg-zinc-500 transition-colors disabled:opacity-60"
               >
                 + Agregar
               </button>

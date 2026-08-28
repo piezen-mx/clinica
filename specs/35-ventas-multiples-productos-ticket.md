@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** [[16-ventas-descuentan-stock-sucursal]] (`ISaleProduct`, `getSaleProducts`, `applyStockMovement`, movimientos `6`/`7`, `inventory.kardex.id_venta`)
 - **Modifica base de datos:** `dbo.Ventas` se recrea como tabla encabezado (antes era una fila por producto); nueva tabla `dbo.VentasDetalle` para las líneas. Sin backfill — se confirmó que no hay datos reales que preservar (mismo criterio que spec 16).
 - **Fecha:** 2026-08-28
@@ -182,23 +182,23 @@ Al eliminar el ticket completo: un movimiento `7` por cada línea existente (rev
 
 ## Criterios de aceptación
 
-- [ ] `dbo.Ventas` existe como tabla encabezado (sin `id_producto`/`cantidad` propios) y `dbo.VentasDetalle` existe con FK a `dbo.Ventas`, ambas registradas en `queries.txt`.
-- [ ] `IVenta` incluye `lineas: IVentaDetalle[]`; `IVentaDetalle` existe con `id_producto`, `cantidad`, `precio_unitario`, `subtotal`.
-- [ ] El modal "Nueva venta" permite agregar dos o más productos distintos a un mismo ticket antes de guardar.
-- [ ] Agregar un producto ya presente en el ticket suma su cantidad a la línea existente, sin crear una segunda línea del mismo producto.
-- [ ] El total del ticket es de solo lectura y siempre igual a la suma de `cantidad × precio efectivo` de sus líneas visibles; no existe forma de editarlo a mano.
-- [ ] El botón "Guardar" está deshabilitado si el ticket no tiene ninguna línea.
-- [ ] Un solo método de pago se captura por ticket completo, no por línea.
-- [ ] Registrar un ticket nuevo con N líneas inserta el encabezado, N filas en `VentasDetalle`, y genera exactamente N filas de kardex con movimiento `6` ("Salida por venta"), cada una con `id_venta` ligado al encabezado y `quantity` igual a la cantidad de su línea.
-- [ ] `inventory.stock` de cada producto del ticket baja exactamente en la cantidad de su línea tras registrar la venta.
-- [ ] `precio_unitario` y `subtotal` de cada línea quedan grabados como snapshot al momento de guardar; si el precio del producto cambia después, un ticket ya guardado no se altera.
-- [ ] Editar un ticket agregando una línea nueva genera un movimiento `6` para esa línea; quitando una línea genera un movimiento `7` que revierte su cantidad completa y elimina la fila de `VentasDetalle`; cambiando la cantidad de una línea existente genera el movimiento `6`/`7` correspondiente a la diferencia — todo dentro de una sola transacción junto con los `UPDATE`/`INSERT`/`DELETE` de `VentasDetalle` y del encabezado.
-- [ ] Eliminar (soft-delete) un ticket revierte con movimiento `7` el stock de **todas** sus líneas antes de marcar `status = 0` en el encabezado.
-- [ ] Si la cantidad de una línea (al crear o aumentar en edición) deja su stock por debajo de cero, el modal muestra la advertencia solo en esa línea, sin bloquear el guardado.
-- [ ] El listado de `/dashboard/ventas` muestra una fila por ticket, con sus productos resumidos de forma compacta, no una fila por línea de producto.
-- [ ] `id_sucursal`, `id_empresa`, `id_usuario` se resuelven igual que hoy (sucursal desde `SucursalContext` en cliente, empresa/usuario desde el JWT en el server action); el total y el `precio_unitario` de cada línea se recalculan en el servidor, nunca se confía en un total mandado por el cliente.
-- [ ] La página se ve correctamente en modo claro y oscuro, consistente con el resto de Ventas.
-- [ ] `npm run build` sin errores de TypeScript.
+- [x] `dbo.Ventas` existe como tabla encabezado (sin `id_producto`/`cantidad` propios) y `dbo.VentasDetalle` existe con FK a `dbo.Ventas`, ambas registradas en `queries.txt`.
+- [x] `IVenta` incluye `lineas: IVentaDetalle[]`; `IVentaDetalle` existe con `id_producto`, `cantidad`, `precio_unitario`, `subtotal`.
+- [x] El modal "Nueva venta" permite agregar dos o más productos distintos a un mismo ticket antes de guardar.
+- [x] Agregar un producto ya presente en el ticket suma su cantidad a la línea existente, sin crear una segunda línea del mismo producto.
+- [x] El total del ticket es de solo lectura y siempre igual a la suma de `cantidad × precio efectivo` de sus líneas visibles; no existe forma de editarlo a mano.
+- [x] El botón "Guardar" está deshabilitado si el ticket no tiene ninguna línea.
+- [x] Un solo método de pago se captura por ticket completo, no por línea.
+- [x] Registrar un ticket nuevo con N líneas inserta el encabezado, N filas en `VentasDetalle`, y genera exactamente N filas de kardex con movimiento `6` ("Salida por venta"), cada una con `id_venta` ligado al encabezado y `quantity` igual a la cantidad de su línea.
+- [x] `inventory.stock` de cada producto del ticket baja exactamente en la cantidad de su línea tras registrar la venta.
+- [x] `precio_unitario` y `subtotal` de cada línea quedan grabados como snapshot al momento de guardar; si el precio del producto cambia después, un ticket ya guardado no se altera.
+- [x] Editar un ticket agregando una línea nueva genera un movimiento `6` para esa línea; quitando una línea genera un movimiento `7` que revierte su cantidad completa y elimina la fila de `VentasDetalle`; cambiando la cantidad de una línea existente genera el movimiento `6`/`7` correspondiente a la diferencia — todo dentro de una sola transacción junto con los `UPDATE`/`INSERT`/`DELETE` de `VentasDetalle` y del encabezado.
+- [x] Eliminar (soft-delete) un ticket revierte con movimiento `7` el stock de **todas** sus líneas antes de marcar `status = 0` en el encabezado.
+- [x] Si la cantidad de una línea (al crear o aumentar en edición) deja su stock por debajo de cero, el modal muestra la advertencia solo en esa línea, sin bloquear el guardado.
+- [x] El listado de `/dashboard/ventas` muestra una fila por ticket, con sus productos resumidos de forma compacta, no una fila por línea de producto.
+- [x] `id_sucursal`, `id_empresa`, `id_usuario` se resuelven igual que hoy (sucursal desde `SucursalContext` en cliente, empresa/usuario desde el JWT en el server action); el total y el `precio_unitario` de cada línea se recalculan en el servidor, nunca se confía en un total mandado por el cliente.
+- [x] La página se ve correctamente en modo claro y oscuro, consistente con el resto de Ventas.
+- [x] `npm run build` sin errores de TypeScript.
 
 ## Decisiones tomadas y descartadas
 
