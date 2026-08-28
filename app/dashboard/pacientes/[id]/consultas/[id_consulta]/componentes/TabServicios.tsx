@@ -7,7 +7,6 @@ import {
   ServicioConOpciones,
 } from "../actions";
 import { IConsultaServicio } from "@/interfaces/consulta_servicio";
-import { useSucursal } from "@/contexts/SucursalContext";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -22,7 +21,6 @@ interface Props {
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function TabServicios({ id_consulta, locked, onContinuar, onTotalChange, is_onicomicosis }: Props) {
-  const { selectedId: id_sucursal } = useSucursal();
   const [servicios,         setServicios        ] = useState<ServicioConOpciones[]>([]);
   const [consultaServicios, setConsultaServicios] = useState<IConsultaServicio[]>([]);
   const [loading,           setLoading          ] = useState(true);
@@ -41,7 +39,7 @@ export default function TabServicios({ id_consulta, locked, onContinuar, onTotal
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getServiciosTabData(id_consulta, id_sucursal).then((data) => {
+    getServiciosTabData(id_consulta).then((data) => {
       if (cancelled) return;
       setServicios(data.servicios);
       setConsultaServicios(data.consultaServicios);
@@ -52,7 +50,7 @@ export default function TabServicios({ id_consulta, locked, onContinuar, onTotal
       setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [id_consulta, id_sucursal]);
+  }, [id_consulta]);
 
   // Returns the currently selected id_servicio_opcion for a given servicio
   const getSelected = (id_servicio: number): number => {
