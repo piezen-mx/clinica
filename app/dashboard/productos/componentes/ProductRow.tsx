@@ -64,9 +64,9 @@ export default function ProductRow({ product, categoryName, supplierName, onEdit
         </td>
         <td className="px-6 py-4 text-[#44474f] dark:text-zinc-400">{product.size || "—"}</td>
         <td className="px-6 py-4 text-[#44474f] dark:text-zinc-400">{product.min_stock ?? "—"}</td>
-        <td className="px-6 py-4 text-[#44474f] dark:text-zinc-400">
+        {/* <td className="px-6 py-4 text-[#44474f] dark:text-zinc-400">
           {product.auto_consume ? product.consumption_per_consultation : "—"}
-        </td>
+        </td> */}
         <td className="px-6 py-4">
           {product.activo ? (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#009c6b]/10 text-[#009c6b] border border-[#009c6b]/20 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800">

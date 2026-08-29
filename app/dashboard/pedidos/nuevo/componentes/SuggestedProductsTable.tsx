@@ -40,8 +40,8 @@ export default function SuggestedProductsTable({
               <th className="px-4 py-4 w-12" />
               <th className="px-6 py-4 font-semibold min-w-55">Producto</th>
               <th className="px-6 py-4 font-semibold">Categoría</th>
-              <th className="px-4 py-4 font-semibold text-right">Stock actual</th>
-              <th className="px-4 py-4 font-semibold text-right">Stock mínimo</th>
+              <th className="px-4 py-4 font-semibold text-right">Stock</th>
+              <th className="px-4 py-4 font-semibold text-right">Stock mín.</th>
               <th className="px-4 py-4 font-semibold text-center">Cantidad a pedir</th>
               <th className="px-4 py-4 font-semibold">Unidad</th>
               <th className="px-4 py-4 font-semibold text-right">Precio unit.</th>
