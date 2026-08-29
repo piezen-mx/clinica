@@ -216,8 +216,8 @@ export default function ProductosPage() {
                   <th className="px-6 py-4 font-semibold">Proveedor</th>
                   <th className="px-6 py-4 font-semibold text-right">Precio Unit.</th>
                   <th className="px-6 py-4 font-semibold">Talla/Medida</th>
-                  <th className="px-6 py-4 font-semibold">Stock Mínimo</th>
-                  <th className="px-6 py-4 font-semibold">Consumo/consulta</th>
+                  <th className="px-6 py-4 font-semibold">Stock Mín.</th>
+                  {/* <th className="px-6 py-4 font-semibold">Consumo/consulta</th> */}
                   <th className="px-6 py-4 font-semibold">Estado</th>
                   <th className="px-6 py-4 font-semibold text-right">Acciones</th>
                 </tr>
