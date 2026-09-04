@@ -29,6 +29,7 @@ export default function Sidebar({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [passwordModal, setPasswordModal] = useState(false);
   const [flyoutTop, setFlyoutTop] = useState<number | null>(null);
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     NAV_LINKS.forEach((l) => {
@@ -95,8 +96,12 @@ export default function Sidebar({ children }: { children: ReactNode }) {
         <div
           key={link.label}
           className="relative"
-          onMouseEnter={(e) => collapsed && setFlyoutTop(e.currentTarget.getBoundingClientRect().top)}
-          onMouseLeave={() => setFlyoutTop(null)}
+          onMouseEnter={(e) => {
+            if (!collapsed) return;
+            setFlyoutTop(e.currentTarget.getBoundingClientRect().top);
+            setHoveredGroup(link.label);
+          }}
+          onMouseLeave={() => collapsed && setHoveredGroup(null)}
         >
           <button
             type="button"
@@ -117,7 +122,11 @@ export default function Sidebar({ children }: { children: ReactNode }) {
             flyoutTop !== null && (
               <div
                 style={{ position: "fixed", top: flyoutTop, left: RAIL_WIDTH + 8 }}
-                className="z-50 min-w-[180px] rounded-lg bg-[#00204a] py-2 shadow-lg"
+                onMouseEnter={() => setHoveredGroup(link.label)}
+                onMouseLeave={() => setHoveredGroup(null)}
+                className={`z-50 min-w-[180px] rounded-lg bg-[#00204a] py-2 shadow-lg transition-opacity duration-300 ${
+                  hoveredGroup === link.label ? "opacity-100" : "pointer-events-none opacity-0"
+                }`}
               >
                 <p className="px-3 pb-1 text-xs font-semibold text-white/50">{link.label}</p>
                 {submenu}

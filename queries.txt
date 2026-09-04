@@ -1079,3 +1079,6 @@ ALTER TABLE [CentroPodologico].[dbo].[VentasDetalle] CHECK CONSTRAINT [FK_Ventas
 GO
 CREATE INDEX [IX_VentasDetalle_id_venta] ON [CentroPodologico].[dbo].[VentasDetalle] ([id_venta] ASC)
 GO
+
+ALTER TABLE [CentroPodologico].[inventory].[Products] ADD [bono_venta] [decimal](10,2) NULL -- bono de venta; solo aplica a productos de categoria Venta (id_category = 4), sin default para distinguir "sin bono" de "bono de $0"
+GO

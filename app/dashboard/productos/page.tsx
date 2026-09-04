@@ -31,6 +31,7 @@ const EMPTY: ProductFormData = {
   activo: true,
   split: false,
   url_product: "",
+  bono_venta: null,
 };
 
 export default function ProductosPage() {
@@ -72,6 +73,10 @@ export default function ProductosPage() {
     () => new Map(suppliers.map((s) => [s.id_proveedor, s.nombre_corto])),
     [suppliers]
   );
+  const unitNameById = useMemo(
+    () => new Map(unitsMeasurement.map((u) => [u.id_unit_measurement, u.name])),
+    [unitsMeasurement]
+  );
 
   const openNew = () => {
     setForm(EMPTY);
@@ -100,6 +105,7 @@ export default function ProductosPage() {
       activo: product.activo,
       split: product.split,
       url_product: product.url_product ?? "",
+      bono_venta: product.bono_venta,
     });
     setError(null);
     setShowModal(true);
@@ -117,7 +123,7 @@ export default function ProductosPage() {
           ? (e.target as HTMLInputElement).checked
           : name === "price"
           ? parseFloat(value) || 0
-          : name === "sale_price" || name === "consumption_per_consultation"
+          : name === "sale_price" || name === "consumption_per_consultation" || name === "bono_venta"
           ? (value === "" ? null : parseFloat(value) || 0)
           : numericFields.includes(name)
           ? value === "" ? null : Number(value)
@@ -236,6 +242,7 @@ export default function ProductosPage() {
                       product={p}
                       categoryName={p.id_category ? categoryNameById.get(p.id_category) ?? "" : ""}
                       supplierName={p.id_supplier ? supplierNameById.get(p.id_supplier) ?? "" : ""}
+                      unitName={p.id_unit_measurement ? unitNameById.get(p.id_unit_measurement) ?? "" : ""}
                       onEdit={openEdit}
                       onDeleted={fetchProducts}
                     />
@@ -256,6 +263,7 @@ export default function ProductosPage() {
           unitsMeasurement={unitsMeasurement}
           suppliers={suppliers}
           onChange={handleChange}
+          onImageUploaded={(url) => setForm((prev) => ({ ...prev, url_product: url }))}
           onSubmit={handleSubmit}
           onClose={() => setShowModal(false)}
         />

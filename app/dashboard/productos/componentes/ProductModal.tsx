@@ -5,6 +5,7 @@ import { IProductCategory } from "@/interfaces/product_category";
 import { IUnitMeasurement } from "@/interfaces/unit_measurement";
 import { ISupplier } from "@/interfaces/supplier";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRef, useState } from "react";
 
 /** Solo Administrador (1) y Dueño/Gerencia (4) pueden ajustar el Stock Mínimo — ver Inventario.md. */
 const MIN_STOCK_ALLOWED_ROLES = [1, 4];
@@ -19,6 +20,7 @@ interface Props {
   unitsMeasurement: IUnitMeasurement[];
   suppliers: ISupplier[];
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  onImageUploaded: (url: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
 }
@@ -26,6 +28,33 @@ interface Props {
 const inputClass =
   "w-full rounded-lg border border-[#c4c6d0] dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2 text-sm text-[#0b1c30] dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-[#0051d5] focus:border-[#0051d5] transition-colors";
 const labelClass = "block text-xs font-semibold text-[#44474f] dark:text-zinc-400 mb-1";
+
+/** Mismo patrón que TabFotos.tsx, pero con maxWidth = 400 (ver spec 37). */
+const resizeImage = (file: File, maxWidth = 400, quality = 0.82): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    const img       = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const scale   = img.width > maxWidth ? maxWidth / img.width : 1;
+      const canvas  = document.createElement("canvas");
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("Canvas no disponible")); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("Error al comprimir imagen"))),
+        "image/jpeg",
+        quality,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("No se pudo leer la imagen"));
+    };
+    img.src = objectUrl;
+  });
 
 export default function ProductModal({
   form,
@@ -35,12 +64,52 @@ export default function ProductModal({
   unitsMeasurement,
   suppliers,
   onChange,
+  onImageUploaded,
   onSubmit,
   onClose,
 }: Props) {
   const { user } = useAuth();
   const canEditMinStock = !!user && MIN_STOCK_ALLOWED_ROLES.includes(user.id_role);
   const isVentaSplit = form.id_category === 4 && !!form.split;
+  const isVenta = form.id_category === 4;
+
+  const imageInputRef                    = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError]         = useState<string | null>(null);
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setImageError(null);
+    try {
+      const resized = await resizeImage(file);
+
+      const sanitize = (s: string) =>
+        s.normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, "_").toLowerCase();
+      const baseName  = form.name && form.name.trim() ? sanitize(form.name) : "producto";
+      const fileName  = `${baseName}_${Date.now()}.jpg`;
+
+      const uploadRes = await fetch(
+        `/api/upload?name=${encodeURIComponent(fileName)}&folder=clinica/productos`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "image/jpeg" },
+          body: resized,
+        }
+      );
+      const uploadData = await uploadRes.json();
+      if (!uploadData.ok) throw new Error(uploadData.data ?? "Error al subir la imagen");
+
+      onImageUploaded(String(uploadData.data));
+    } catch (err: unknown) {
+      setImageError(err instanceof Error ? err.message : "Error al subir la imagen");
+    } finally {
+      setUploadingImage(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -154,7 +223,7 @@ export default function ProductModal({
               />
             </div>
 
-            {isVentaSplit && (
+            {isVenta && (
               <div>
                 <label className={labelClass}>Precio de Venta (pieza)</label>
                 <input
@@ -165,6 +234,21 @@ export default function ProductModal({
                   min={0}
                   step="0.01"
                   required
+                  className={inputClass}
+                />
+              </div>
+            )}
+
+            {isVenta && (
+              <div>
+                <label className={labelClass}>Bono de Venta</label>
+                <input
+                  type="number"
+                  name="bono_venta"
+                  value={form.bono_venta ?? ""}
+                  onChange={onChange}
+                  min={0}
+                  step="0.01"
                   className={inputClass}
                 />
               </div>
@@ -198,16 +282,42 @@ export default function ProductModal({
               </select>
             </div>
 
-            <div>
-              <label className={labelClass}>URL Producto</label>
-              <input
-                type="url"
-                name="url_product"
-                value={form.url_product ?? ""}
-                onChange={onChange}
-                placeholder="https://ejemplo.com/producto"
-                className={inputClass}
-              />
+            <div className="md:col-span-2">
+              <label className={labelClass}>Imagen del Producto</label>
+              <div className="flex items-center gap-4">
+                {form.url_product ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={form.url_product}
+                    alt={form.name || "Producto"}
+                    className="h-20 w-20 rounded-lg object-cover border border-[#c4c6d0] dark:border-zinc-600"
+                  />
+                ) : (
+                  <div className="h-20 w-20 rounded-lg border border-dashed border-[#c4c6d0] dark:border-zinc-600 flex items-center justify-center text-xs text-[#747780] dark:text-zinc-500 text-center px-1">
+                    Sin imagen
+                  </div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                  <button
+                    type="button"
+                    disabled={uploadingImage}
+                    onClick={() => imageInputRef.current?.click()}
+                    className="rounded-lg border border-[#c4c6d0] dark:border-zinc-600 px-4 py-2 text-sm font-medium text-[#44474f] dark:text-zinc-300 hover:bg-[#eff4ff] dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                  >
+                    {uploadingImage ? "Subiendo…" : "Subir imagen"}
+                  </button>
+                  {imageError && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{imageError}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div>
