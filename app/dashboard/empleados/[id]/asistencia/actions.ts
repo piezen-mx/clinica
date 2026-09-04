@@ -2,13 +2,35 @@
 
 import db from "@/database/connection";
 import { IAuthUser } from "@/interfaces/auth";
-import { IEmployeeIdentifierListItem } from "@/interfaces/asistencia";
+import {
+  IAttendanceDayState,
+  IAttendanceEvent,
+  IAttendanceEventListItem,
+  IAttendanceEventsPage,
+  IAttendanceSummary,
+  IEmployeeIdentifierListItem,
+} from "@/interfaces/asistencia";
 import { IChecadorListItem } from "@/interfaces/checador";
 import { getEmployeeById } from "@/app/dashboard/empleados/actions";
 import { buildDate } from "@/utils/date_helpper";
+import { summarizeAttendanceEvents } from "./attendancePairing";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
+
+const ATTENDANCE_PAGE_SIZE = 15;
+
+/** Expande "YYYY-MM" al primer y último día calendario de ese mes, como "YYYY-MM-DD". */
+function expandMonthToDateRange(mes: string): { firstDay: string; lastDay: string } {
+  const [yearStr, monthStr] = mes.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return {
+    firstDay: `${yearStr}-${monthStr}-01`,
+    lastDay: `${yearStr}-${monthStr}-${String(daysInMonth).padStart(2, "0")}`,
+  };
+}
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET_SEED!);
 
@@ -151,4 +173,121 @@ export async function deactivateEmployeeIdentifier(
   } catch {
     return { ok: false, message: "Error al dar de baja el identificador" };
   }
+}
+
+/** Página de checadas del empleado en el rango [desde, hasta] (inclusivo del día hasta completo). */
+export async function getEmployeeAttendanceEvents(input: {
+  id_empleado: number;
+  desde: string;
+  hasta: string;
+  pagina: number;
+}): Promise<IAttendanceEventsPage> {
+  const { id_empleado, desde, hasta, pagina } = input;
+  const employee = await getEmployeeById(id_empleado);
+  if (!employee) return { events: [], total: 0 };
+
+  const offset = (pagina - 1) * ATTENDANCE_PAGE_SIZE;
+
+  const events = await db.queryParams(
+    `SELECT a.[id_asistencia],
+            a.[id_empleado],
+            a.[id_checador],
+            CONVERT(varchar(19), a.[fecha_hora], 120) AS fecha_hora,
+            a.[tipo],
+            a.[identificador_origen],
+            CONVERT(varchar(19), a.[created_at], 120) AS created_at,
+            c.[nombre] AS nombre_checador,
+            s.[nombre] AS nombre_sucursal
+       FROM [CentroPodologico].[RH].[asistencias] a
+       JOIN [CentroPodologico].[RH].[checadores] c ON c.[id_checador] = a.[id_checador]
+       JOIN [CentroPodologico].[dbo].[sucursales] s ON s.[id_sucursal] = c.[id_sucursal]
+      WHERE a.[id_empleado] = @id_empleado
+        AND a.[fecha_hora] >= @desde
+        AND a.[fecha_hora] < DATEADD(day, 1, @hasta)
+      ORDER BY a.[fecha_hora] DESC
+      OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY`,
+    { id_empleado, desde, hasta, offset, pageSize: ATTENDANCE_PAGE_SIZE }
+  );
+
+  const totalResult = await db.queryParams(
+    `SELECT COUNT(*) AS total
+       FROM [CentroPodologico].[RH].[asistencias] a
+      WHERE a.[id_empleado] = @id_empleado
+        AND a.[fecha_hora] >= @desde
+        AND a.[fecha_hora] < DATEADD(day, 1, @hasta)`,
+    { id_empleado, desde, hasta }
+  );
+
+  return {
+    events: events as IAttendanceEventListItem[],
+    total: (totalResult[0] as { total: number }).total,
+  };
+}
+
+/** Métricas de las 4 tarjetas de resumen, calculadas sobre todo el rango (no la página). */
+export async function getEmployeeAttendanceSummary(input: {
+  id_empleado: number;
+  desde: string;
+  hasta: string;
+}): Promise<IAttendanceSummary> {
+  const { id_empleado, desde, hasta } = input;
+  const employee = await getEmployeeById(id_empleado);
+  if (!employee) {
+    return { attended_days: 0, total_events: 0, registered_hours: 0, incomplete_days: 0 };
+  }
+
+  const events = await db.queryParams(
+    `SELECT a.[id_asistencia],
+            a.[id_empleado],
+            a.[id_checador],
+            CONVERT(varchar(19), a.[fecha_hora], 120) AS fecha_hora,
+            a.[tipo],
+            a.[identificador_origen],
+            CONVERT(varchar(19), a.[created_at], 120) AS created_at
+       FROM [CentroPodologico].[RH].[asistencias] a
+      WHERE a.[id_empleado] = @id_empleado
+        AND a.[fecha_hora] >= @desde
+        AND a.[fecha_hora] < DATEADD(day, 1, @hasta)
+      ORDER BY a.[fecha_hora] ASC`,
+    { id_empleado, desde, hasta }
+  );
+
+  const summary = summarizeAttendanceEvents(events as IAttendanceEvent[]);
+  return {
+    attended_days: summary.attended_days,
+    total_events: summary.total_events,
+    registered_hours: summary.registered_hours,
+    incomplete_days: summary.incomplete_days,
+  };
+}
+
+/** Estado (completo/incompleto) por día del mes visible, para los puntos del calendario. */
+export async function getEmployeeAttendanceMonthStates(input: {
+  id_empleado: number;
+  mes: string;
+}): Promise<IAttendanceDayState[]> {
+  const { id_empleado, mes } = input;
+  const employee = await getEmployeeById(id_empleado);
+  if (!employee) return [];
+
+  const { firstDay, lastDay } = expandMonthToDateRange(mes);
+
+  const events = await db.queryParams(
+    `SELECT a.[id_asistencia],
+            a.[id_empleado],
+            a.[id_checador],
+            CONVERT(varchar(19), a.[fecha_hora], 120) AS fecha_hora,
+            a.[tipo],
+            a.[identificador_origen],
+            CONVERT(varchar(19), a.[created_at], 120) AS created_at
+       FROM [CentroPodologico].[RH].[asistencias] a
+      WHERE a.[id_empleado] = @id_empleado
+        AND a.[fecha_hora] >= @firstDay
+        AND a.[fecha_hora] < DATEADD(day, 1, @lastDay)
+      ORDER BY a.[fecha_hora] ASC`,
+    { id_empleado, firstDay, lastDay }
+  );
+
+  const summary = summarizeAttendanceEvents(events as IAttendanceEvent[]);
+  return Array.from(summary.dayStatuses, ([fecha, status]) => ({ fecha, status }));
 }
