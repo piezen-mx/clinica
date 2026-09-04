@@ -73,9 +73,10 @@ export default function EmployeeGeneralInfo({ employee }: Props) {
             <InfoRow label="Dirección" value={employee.direccion || "—"} />
           </div>
           <div className="flex flex-col gap-3">
-            <InfoRow label="Teléfono personal" value={employee.telefono || "—"} />
             <InfoRow label="Contacto de emergencia" value={employee.contacto_emergencia || "—"} />
             <InfoRow label="WhatsApp de emergencia" value={employee.whatsapp_emergencia || "—"} />
+            <InfoRow label="Contacto de emergencia 2" value={employee.contacto_emergencia_2 || "—"} />
+            <InfoRow label="WhatsApp de emergencia 2" value={employee.whatsapp_emergencia_2 || "—"} />
           </div>
         </div>
       </div>
@@ -96,13 +97,11 @@ export default function EmployeeGeneralInfo({ employee }: Props) {
           </div>
           <div className="flex flex-col gap-3">
             <InfoRow label="Salario diario" value={formatCurrency(employee.salario_diario)} />
-            <InfoRow label="Salario quincenal" value={formatCurrency(employee.salario_quincenal)} />
-            <InfoRow label="Salario mensual" value={formatCurrency(employee.salario_mensual)} />
+            <InfoRow label="Salario diario fiscal" value={formatCurrency(employee.salario_diario_fiscal)} />
             <InfoRow
               label="Tipo de salario"
               value={employee.tipo_salario ? TIPO_SALARIO_LABELS[employee.tipo_salario] ?? employee.tipo_salario : "—"}
             />
-            <InfoRow label="Comisión" value={employee.comision !== null ? `${employee.comision}%` : "—"} />
             <InfoRow label="Cuenta bancaria" value={employee.cuenta_bancaria || "—"} />
           </div>
         </div>
