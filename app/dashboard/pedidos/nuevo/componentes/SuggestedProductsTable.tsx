@@ -111,17 +111,24 @@ export default function SuggestedProductsTable({
                       {product.min_stock_effective ?? "—"}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <input
-                        type="number"
-                        min={1}
-                        step="1"
-                        disabled={!checked}
-                        value={quantity}
-                        onChange={(e) =>
-                          setLineQuantity(product.id_product, Math.max(1, Number(e.target.value) || 1))
-                        }
-                        className="w-20 text-center py-1 border border-[#c4c6d0] dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-[#0b1c30] dark:text-zinc-100 outline-none disabled:opacity-50 focus:ring-1 focus:ring-[#0051d5] focus:border-[#0051d5]"
-                      />
+                      <div className="flex flex-col items-center gap-0.5">
+                        <input
+                          type="number"
+                          min={1}
+                          step="1"
+                          disabled={!checked}
+                          value={quantity}
+                          onChange={(e) =>
+                            setLineQuantity(product.id_product, Math.max(1, Number(e.target.value) || 1))
+                          }
+                          className="w-20 text-center py-1 border border-[#c4c6d0] dark:border-zinc-600 rounded bg-white dark:bg-zinc-800 text-[#0b1c30] dark:text-zinc-100 outline-none disabled:opacity-50 focus:ring-1 focus:ring-[#0051d5] focus:border-[#0051d5]"
+                        />
+                        {checked && product.split && product.pieces && product.pieces > 1 && (
+                          <span className="text-[11px] leading-none text-[#44474f] dark:text-zinc-400 whitespace-nowrap">
+                            = {quantity * product.pieces} pzas
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-[#44474f] dark:text-zinc-400">
                       {product.id_unit_measurement
