@@ -39,19 +39,18 @@ function buildEmptyForm(): EmployeeFormInput {
     genero: null,
     estado_civil: null,
     direccion: null,
-    telefono: null,
     contacto_emergencia: null,
     whatsapp_emergencia: null,
+    contacto_emergencia_2: null,
+    whatsapp_emergencia_2: null,
     id_department: 0,
     id_puesto: 0,
     id_turno: null,
     dias_laborales: null,
     horario: null,
     salario_diario: null,
-    salario_quincenal: null,
-    salario_mensual: null,
+    salario_diario_fiscal: null,
     tipo_salario: null,
-    comision: null,
     cuenta_bancaria: null,
   };
 }
@@ -74,19 +73,18 @@ function employeeToFormInput(employee: IEmployeeListItem): EmployeeFormInput {
     genero: employee.genero,
     estado_civil: employee.estado_civil,
     direccion: employee.direccion,
-    telefono: employee.telefono,
     contacto_emergencia: employee.contacto_emergencia,
     whatsapp_emergencia: employee.whatsapp_emergencia,
+    contacto_emergencia_2: employee.contacto_emergencia_2,
+    whatsapp_emergencia_2: employee.whatsapp_emergencia_2,
     id_department: employee.id_department,
     id_puesto: employee.id_puesto,
     id_turno: employee.id_turno,
     dias_laborales: employee.dias_laborales,
     horario: employee.horario,
     salario_diario: employee.salario_diario,
-    salario_quincenal: employee.salario_quincenal,
-    salario_mensual: employee.salario_mensual,
+    salario_diario_fiscal: employee.salario_diario_fiscal,
     tipo_salario: employee.tipo_salario,
-    comision: employee.comision,
     cuenta_bancaria: employee.cuenta_bancaria,
   };
 }
@@ -343,10 +341,6 @@ export default function EmployeeModal({ employee, catalogs, onClose }: Props) {
                   <option value="viudo">Viudo/a</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1">
-                <span className={labelClass}>Teléfono personal</span>
-                <input type="tel" name="telefono" value={form.telefono ?? ""} onChange={handleTextChange} className={inputClass} />
-              </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
                 <span className={labelClass}>Dirección</span>
                 <textarea name="direccion" value={form.direccion ?? ""} onChange={handleTextChange} className={`${inputClass} h-20 resize-none`} />
@@ -358,6 +352,14 @@ export default function EmployeeModal({ employee, catalogs, onClose }: Props) {
               <label className="flex flex-col gap-1">
                 <span className={labelClass}>WhatsApp de emergencia</span>
                 <input type="text" name="whatsapp_emergencia" value={form.whatsapp_emergencia ?? ""} onChange={handleTextChange} className={inputClass} />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className={labelClass}>Contacto de emergencia 2 (nombre)</span>
+                <input type="text" name="contacto_emergencia_2" value={form.contacto_emergencia_2 ?? ""} onChange={handleTextChange} className={inputClass} />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className={labelClass}>WhatsApp de emergencia 2</span>
+                <input type="text" name="whatsapp_emergencia_2" value={form.whatsapp_emergencia_2 ?? ""} onChange={handleTextChange} className={inputClass} />
               </label>
             </div>
           </section>
@@ -430,16 +432,8 @@ export default function EmployeeModal({ employee, catalogs, onClose }: Props) {
                 <input type="number" step="0.01" min="0" name="salario_diario" value={form.salario_diario ?? ""} onChange={handleNumberChange} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1">
-                <span className={labelClass}>Salario quincenal</span>
-                <input type="number" step="0.01" min="0" name="salario_quincenal" value={form.salario_quincenal ?? ""} onChange={handleNumberChange} className={inputClass} />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className={labelClass}>Salario mensual</span>
-                <input type="number" step="0.01" min="0" name="salario_mensual" value={form.salario_mensual ?? ""} onChange={handleNumberChange} className={inputClass} />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className={labelClass}>Comisión (%)</span>
-                <input type="number" step="0.01" min="0" name="comision" value={form.comision ?? ""} onChange={handleNumberChange} className={inputClass} />
+                <span className={labelClass}>Salario diario fiscal</span>
+                <input type="number" step="0.01" min="0" name="salario_diario_fiscal" value={form.salario_diario_fiscal ?? ""} onChange={handleNumberChange} className={inputClass} />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
                 <span className={labelClass}>Cuenta bancaria</span>
