@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** [25 — Módulo de Empleados (RH): alta, listado y expediente](25-empleados-alta-listado-detalle.md). No modifica la estructura base de la tabla `RH.empleados`, solo agrega columnas y cambia qué columnas usa el formulario.
 - **Fecha:** 2026-09-04
 - **Objetivo:** En el modal de alta/edición de empleado, agregar un segundo contacto de emergencia (nombre + WhatsApp) y el campo salario diario fiscal, y quitar del formulario los campos teléfono personal, salario quincenal, salario mensual y comisión.
@@ -89,16 +89,16 @@ Cada paso deja el sistema en un estado funcional (compilable) al terminar.
 
 ## Criterios de aceptación
 
-- [ ] `RH.empleados` tiene las columnas `contacto_emergencia_2`, `whatsapp_emergencia_2` y `salario_diario_fiscal`, con el `ALTER TABLE` documentado en `queries.txt`.
-- [ ] Las columnas `telefono`, `salario_quincenal`, `salario_mensual`, `comision` siguen existiendo físicamente en `RH.empleados`, sin modificarse.
-- [ ] `IEmployee` (y por herencia `IEmployeeListItem`, `IEmployeeRecord`, `EmployeeFormInput`) ya no declara `telefono`, `salario_quincenal`, `salario_mensual` ni `comision`, y sí declara `contacto_emergencia_2`, `whatsapp_emergencia_2` y `salario_diario_fiscal`.
-- [ ] El modal de alta/edición de empleado ya no muestra los inputs Teléfono personal, Salario quincenal, Salario mensual ni Comisión (%).
-- [ ] El modal muestra los inputs Contacto de emergencia 2 (nombre), WhatsApp de emergencia 2 y Salario diario fiscal.
-- [ ] Al dar de alta un empleado nuevo capturando los 3 campos nuevos, y luego abrir su expediente, los valores capturados se muestran correctamente en `EmployeeGeneralInfo.tsx`.
-- [ ] Al editar un empleado existente, guardar cambios en los campos nuevos persiste correctamente (se refleja tras `router.refresh()`).
-- [ ] El expediente (`EmployeeGeneralInfo.tsx`) ya no muestra las filas Teléfono personal, Salario quincenal, Salario mensual ni Comisión, y sí muestra Contacto de emergencia 2, WhatsApp de emergencia 2 y Salario diario fiscal.
-- [ ] `EmployeeHeader.tsx` muestra una fila etiquetada "WhatsApp" con el valor de `employee.whatsapp` (o "—" si es `null`), sin referenciar `employee.telefono`.
-- [ ] `npm run build` (o `tsc --noEmit`) no reporta errores de tipos relacionados con los campos eliminados/agregados en ningún archivo del proyecto.
+- [x] `RH.empleados` tiene las columnas `contacto_emergencia_2`, `whatsapp_emergencia_2` y `salario_diario_fiscal`, con el `ALTER TABLE` documentado en `queries.txt`.
+- [x] Las columnas `telefono`, `salario_quincenal`, `salario_mensual`, `comision` siguen existiendo físicamente en `RH.empleados`, sin modificarse.
+- [x] `IEmployee` (y por herencia `IEmployeeListItem`, `IEmployeeRecord`, `EmployeeFormInput`) ya no declara `telefono`, `salario_quincenal`, `salario_mensual` ni `comision`, y sí declara `contacto_emergencia_2`, `whatsapp_emergencia_2` y `salario_diario_fiscal`.
+- [x] El modal de alta/edición de empleado ya no muestra los inputs Teléfono personal, Salario quincenal, Salario mensual ni Comisión (%).
+- [x] El modal muestra los inputs Contacto de emergencia 2 (nombre), WhatsApp de emergencia 2 y Salario diario fiscal.
+- [x] Al dar de alta un empleado nuevo capturando los 3 campos nuevos, y luego abrir su expediente, los valores capturados se muestran correctamente en `EmployeeGeneralInfo.tsx`.
+- [x] Al editar un empleado existente, guardar cambios en los campos nuevos persiste correctamente (se refleja tras `router.refresh()`).
+- [x] El expediente (`EmployeeGeneralInfo.tsx`) ya no muestra las filas Teléfono personal, Salario quincenal, Salario mensual ni Comisión, y sí muestra Contacto de emergencia 2, WhatsApp de emergencia 2 y Salario diario fiscal.
+- [x] `EmployeeHeader.tsx` muestra una fila etiquetada "WhatsApp" con el valor de `employee.whatsapp` (o "—" si es `null`), sin referenciar `employee.telefono`.
+- [x] `npm run build` (o `tsc --noEmit`) no reporta errores de tipos relacionados con los campos eliminados/agregados en ningún archivo del proyecto.
 
 ## Decisiones tomadas y descartadas
 
