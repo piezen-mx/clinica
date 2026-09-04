@@ -195,6 +195,8 @@ export interface ICreatePurchaseOrdersInput {
   lines:                    ICreatePurchaseOrderLineInput[];
   /** id_supplier -> idMetodoPago. Obligatorio para cada proveedor con líneas en el carrito. */
   paymentMethodBySupplier:  Record<number, number>;
+  /** id_supplier -> gasto de envío. Proveedor ausente = 0. */
+  shippingCostBySupplier:   Record<number, number>;
 }
 
 const TAX_RATE = 16;
@@ -210,7 +212,7 @@ export async function createPurchaseOrders(
 ): Promise<ActionResult<{ folios: string[] }>> {
   try {
     const { id_empresa, id_user } = await getActiveUser();
-    const { id_sucursal, estimated_date, notes, lines, paymentMethodBySupplier } = input;
+    const { id_sucursal, estimated_date, notes, lines, paymentMethodBySupplier, shippingCostBySupplier } = input;
 
     if (!lines || lines.length === 0) {
       return { ok: false, message: "El carrito está vacío" };
@@ -232,6 +234,15 @@ export async function createPurchaseOrders(
       return {
         ok: false,
         message: `Falta asignar un método de pago para el proveedor con id ${supplierWithoutPaymentMethod}`,
+      };
+    }
+    const supplierWithNegativeShipping = supplierIdsWithLines.find(
+      (id_supplier) => (shippingCostBySupplier?.[id_supplier] ?? 0) < 0
+    );
+    if (supplierWithNegativeShipping !== undefined) {
+      return {
+        ok: false,
+        message: `El gasto de envío no puede ser negativo para el proveedor con id ${supplierWithNegativeShipping}`,
       };
     }
 
@@ -302,7 +313,8 @@ export async function createPurchaseOrders(
         });
         const subtotal = round2(itemsToInsert.reduce((sum, item) => sum + item.lineTotal, 0));
         const tax = round2(itemsToInsert.reduce((sum, item) => sum + item.lineTaxAmount, 0));
-        const total = round2(subtotal + tax);
+        const shipping = round2(shippingCostBySupplier?.[id_supplier] ?? 0);
+        const total = round2(subtotal + tax + shipping);
 
         const orderResult = await tx.queryParams(
           `INSERT INTO [CentroPodologico].[inventory].[purchase_orders]
@@ -312,7 +324,7 @@ export async function createPurchaseOrders(
            OUTPUT inserted.id_purchase_order
            VALUES
              (@folio,@id_batch,@id_empresa,@id_sucursal,@id_supplier,1,
-              @subtotal,0,@tax,0,@total,@tax_rate,
+              @subtotal,0,@tax,@shipping_cost,@total,@tax_rate,
               @estimated_date,@notes,@id_metodo_pago,@id_user_created,@created_at,1)`,
           {
             folio,
@@ -322,6 +334,7 @@ export async function createPurchaseOrders(
             id_supplier,
             subtotal,
             tax,
+            shipping_cost: shipping,
             total,
             tax_rate: TAX_RATE,
             estimated_date: estimated_date || null,
