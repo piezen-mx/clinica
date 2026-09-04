@@ -177,36 +177,36 @@ Cada paso deja el sistema compilable; los pasos 1–3 no cambian todavía la UI,
 
 ## Criterios de aceptación
 
-- [ ] `interfaces/asistencia.ts` exporta `IAttendanceEventListItem`, `IAttendanceEventsPage`, `IAttendanceSummary`, `AttendanceDayStatus` e `IAttendanceDayState`, sin modificar los tipos existentes.
-- [ ] No se ejecutó ningún DDL: `RH.asistencias` y el resto del esquema quedan idénticos, y `queries.txt` no se modificó.
-- [ ] Al abrir `/dashboard/empleados/[id]/asistencia` sin parámetros, la tabla muestra únicamente las checadas con fecha de hoy y el calendario abre en el mes actual.
-- [ ] La tabla muestra una fila por checada con las columnas Fecha, Hora, Tipo y Sucursal — y **no** muestra columnas Método ni Estado/Obs.
-- [ ] La columna Sucursal muestra la sucursal del **checador** que registró la checada (vía `JOIN` a `RH.checadores`), no la sucursal asignada al empleado.
-- [ ] Las filas se ordenan de la checada más reciente a la más antigua.
-- [ ] La paginación es server-side con 15 filas por página: el server action devuelve solo esa página más el `total` del rango, y el pie muestra el conteo correcto.
-- [ ] Navegar entre páginas conserva el rango y el mes seleccionados en la URL.
-- [ ] Las 4 tarjetas muestran Días con asistencia, Total de checadas, Horas registradas y Días incompletos, calculadas sobre el rango seleccionado (no sobre la página visible).
-- [ ] `registered_hours` suma cada par entrada→salida en secuencia dentro del mismo día: un día con entrada, salida, entrada, salida suma ambos pares.
-- [ ] Un día con entrada sin salida (o salida sin entrada) cuenta en `incomplete_days` y no aporta horas.
-- [ ] En el calendario, un día con entrada y salida pinta punto verde; un día incompleto pinta punto ámbar; un día sin checadas no pinta punto.
-- [ ] Los puntos del calendario corresponden a todo el mes visible, aunque el rango seleccionado sea solo un día.
-- [ ] Hacer clic en dos días distintos filtra la tabla y las tarjetas por ese rango, incluyendo las checadas del día final completo (una checada a las 23:50 del día `hasta` aparece).
-- [ ] Seleccionar un rango invertido (clic en un día posterior y luego en uno anterior) produce un rango válido, no una tabla vacía.
-- [ ] Navegar de mes en el calendario repinta los puntos sin alterar el rango seleccionado.
-- [ ] "Limpiar rango" devuelve el filtro a hoy y el calendario al mes actual.
-- [ ] El estado (`desde`, `hasta`, `mes`, `pagina`) vive en la URL; recargar la página o compartir la URL reproduce exactamente la misma vista.
-- [ ] Parámetros inválidos o ausentes en la URL se normalizan a los valores por defecto sin romper la página.
-- [ ] `page.tsx` es Server Component; `"use client"` aparece solo en `EmployeeIdentifiersModal.tsx`, `AttendanceCalendar.tsx` y el preexistente `EmployeeIdentifierForm.tsx`.
-- [ ] El paginador se renderiza con `<Link>` desde el Server Component, sin componente cliente propio.
-- [ ] El botón "Identificadores" del encabezado abre un modal que lista los identificadores activos del empleado y permite darlos de alta y de baja, con el mismo comportamiento que la pantalla anterior.
-- [ ] La configuración de identificadores ya no ocupa el cuerpo de la pestaña.
-- [ ] No existe en ninguna parte de la pantalla un botón "Registrar Asistencia Manual", ni "Actualizar", ni indicadores de retardo/falta/puntualidad.
-- [ ] Todas las consultas nuevas usan `queryParams` y validan pertenencia del empleado con `getEmployeeById`.
-- [ ] Todas las columnas de fecha se traen con `CONVERT(varchar(19), …, 120)` y no se construye ningún `Date` a partir de strings crudos de BD; el "hoy" por defecto usa `addZeroToday(new Date())`.
-- [ ] Una checada registrada a las 08:58 se muestra como 08:58, sin desplazamiento de zona horaria.
-- [ ] Un empleado sin checadas en el rango muestra estado vacío, tarjetas en cero y calendario sin puntos, sin errores.
-- [ ] `npm run build` compila sin errores ni warnings nuevos.
-- [ ] Roles 2, 3 y 5 siguen siendo redirigidos por `proxy.ts` al entrar a la ruta, sin cambios en `proxy.ts`.
+- [x] `interfaces/asistencia.ts` exporta `IAttendanceEventListItem`, `IAttendanceEventsPage`, `IAttendanceSummary`, `AttendanceDayStatus` e `IAttendanceDayState`, sin modificar los tipos existentes.
+- [x] No se ejecutó ningún DDL: `RH.asistencias` y el resto del esquema quedan idénticos, y `queries.txt` no se modificó.
+- [x] Al abrir `/dashboard/empleados/[id]/asistencia` sin parámetros, la tabla muestra únicamente las checadas con fecha de hoy y el calendario abre en el mes actual.
+- [x] La tabla muestra una fila por checada con las columnas Fecha, Hora, Tipo y Sucursal — y **no** muestra columnas Método ni Estado/Obs.
+- [x] La columna Sucursal muestra la sucursal del **checador** que registró la checada (vía `JOIN` a `RH.checadores`), no la sucursal asignada al empleado.
+- [x] Las filas se ordenan de la checada más reciente a la más antigua.
+- [x] La paginación es server-side con 15 filas por página: el server action devuelve solo esa página más el `total` del rango, y el pie muestra el conteo correcto.
+- [x] Navegar entre páginas conserva el rango y el mes seleccionados en la URL.
+- [x] Las 4 tarjetas muestran Días con asistencia, Total de checadas, Horas registradas y Días incompletos, calculadas sobre el rango seleccionado (no sobre la página visible).
+- [x] `registered_hours` suma cada par entrada→salida en secuencia dentro del mismo día: un día con entrada, salida, entrada, salida suma ambos pares.
+- [x] Un día con entrada sin salida (o salida sin entrada) cuenta en `incomplete_days` y no aporta horas.
+- [x] En el calendario, un día con entrada y salida pinta punto verde; un día incompleto pinta punto ámbar; un día sin checadas no pinta punto.
+- [x] Los puntos del calendario corresponden a todo el mes visible, aunque el rango seleccionado sea solo un día.
+- [x] Hacer clic en dos días distintos filtra la tabla y las tarjetas por ese rango, incluyendo las checadas del día final completo (una checada a las 23:50 del día `hasta` aparece).
+- [x] Seleccionar un rango invertido (clic en un día posterior y luego en uno anterior) produce un rango válido, no una tabla vacía.
+- [x] Navegar de mes en el calendario repinta los puntos sin alterar el rango seleccionado.
+- [x] "Limpiar rango" devuelve el filtro a hoy y el calendario al mes actual.
+- [x] El estado (`desde`, `hasta`, `mes`, `pagina`) vive en la URL; recargar la página o compartir la URL reproduce exactamente la misma vista.
+- [x] Parámetros inválidos o ausentes en la URL se normalizan a los valores por defecto sin romper la página.
+- [x] `page.tsx` es Server Component; `"use client"` aparece solo en `EmployeeIdentifiersModal.tsx`, `AttendanceCalendar.tsx` y el preexistente `EmployeeIdentifierForm.tsx`.
+- [x] El paginador se renderiza con `<Link>` desde el Server Component, sin componente cliente propio.
+- [x] El botón "Identificadores" del encabezado abre un modal que lista los identificadores activos del empleado y permite darlos de alta y de baja, con el mismo comportamiento que la pantalla anterior.
+- [x] La configuración de identificadores ya no ocupa el cuerpo de la pestaña.
+- [x] No existe en ninguna parte de la pantalla un botón "Registrar Asistencia Manual", ni "Actualizar", ni indicadores de retardo/falta/puntualidad.
+- [x] Todas las consultas nuevas usan `queryParams` y validan pertenencia del empleado con `getEmployeeById`.
+- [x] Todas las columnas de fecha se traen con `CONVERT(varchar(19), …, 120)` y no se construye ningún `Date` a partir de strings crudos de BD; el "hoy" por defecto usa `addZeroToday(new Date())`.
+- [x] Una checada registrada a las 08:58 se muestra como 08:58, sin desplazamiento de zona horaria.
+- [x] Un empleado sin checadas en el rango muestra estado vacío, tarjetas en cero y calendario sin puntos, sin errores.
+- [x] `npm run build` compila sin errores ni warnings nuevos.
+- [x] Roles 2, 3 y 5 siguen siendo redirigidos por `proxy.ts` al entrar a la ruta, sin cambios en `proxy.ts`.
 
 ## Decisiones tomadas y descartadas
 

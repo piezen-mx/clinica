@@ -96,7 +96,7 @@ export default function EmployeeIdentifiersModal({ id_empleado, identifiers, che
                               Tipo
                             </th>
                             <th className="px-4 py-3 text-left font-semibold text-[#44474f] dark:text-zinc-300 whitespace-nowrap">
-                              Identificador
+                              PIN
                             </th>
                             <th className="px-4 py-3" />
                           </tr>
@@ -121,7 +121,7 @@ export default function EmployeeIdentifiersModal({ id_empleado, identifiers, che
                                   disabled={deactivatingId === item.id_empleado_identificador}
                                   className="px-3 py-1.5 text-xs font-semibold text-[#ba1a1a] dark:text-red-400 hover:bg-[#ba1a1a]/10 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
                                 >
-                                  {deactivatingId === item.id_empleado_identificador ? "Dando de baja…" : "Dar de baja"}
+                                  {deactivatingId === item.id_empleado_identificador ? "Dando de baja…" : "Baja"}
                                 </button>
                               </td>
                             </tr>
