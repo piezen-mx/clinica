@@ -21,9 +21,10 @@ export interface IEmployee {
   genero:              string | null;
   estado_civil:        string | null;
   direccion:           string | null;
-  telefono:            string | null;
   contacto_emergencia: string | null;
   whatsapp_emergencia: string | null;
+  contacto_emergencia_2: string | null;
+  whatsapp_emergencia_2: string | null;
 
   id_department:       number;
   id_puesto:           number;
@@ -31,10 +32,8 @@ export interface IEmployee {
   dias_laborales:      string | null;
   horario:             string | null;
   salario_diario:      number | null;
-  salario_quincenal:   number | null;
-  salario_mensual:     number | null;
+  salario_diario_fiscal: number | null;
   tipo_salario:        string | null;
-  comision:            number | null;
   cuenta_bancaria:     string | null;
 
   activo:              boolean;
