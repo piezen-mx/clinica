@@ -31,6 +31,7 @@ const EMPTY: ProductFormData = {
   activo: true,
   split: false,
   url_product: "",
+  bono_venta: null,
 };
 
 export default function ProductosPage() {
@@ -100,6 +101,7 @@ export default function ProductosPage() {
       activo: product.activo,
       split: product.split,
       url_product: product.url_product ?? "",
+      bono_venta: product.bono_venta,
     });
     setError(null);
     setShowModal(true);
@@ -117,7 +119,7 @@ export default function ProductosPage() {
           ? (e.target as HTMLInputElement).checked
           : name === "price"
           ? parseFloat(value) || 0
-          : name === "sale_price" || name === "consumption_per_consultation"
+          : name === "sale_price" || name === "consumption_per_consultation" || name === "bono_venta"
           ? (value === "" ? null : parseFloat(value) || 0)
           : numericFields.includes(name)
           ? value === "" ? null : Number(value)
@@ -256,6 +258,7 @@ export default function ProductosPage() {
           unitsMeasurement={unitsMeasurement}
           suppliers={suppliers}
           onChange={handleChange}
+          onImageUploaded={(url) => setForm((prev) => ({ ...prev, url_product: url }))}
           onSubmit={handleSubmit}
           onClose={() => setShowModal(false)}
         />
