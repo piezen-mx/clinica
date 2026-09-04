@@ -31,8 +31,10 @@ export default function RevisionOrdenPage() {
     estimatedDate,
     notes,
     paymentMethodBySupplier,
+    shippingCostBySupplier,
     isHydrated,
     setSupplierPaymentMethod,
+    setSupplierShippingCost,
     clearCart,
   } = usePurchaseCart();
 
@@ -85,7 +87,11 @@ export default function RevisionOrdenPage() {
       ((line.applies_iva ?? true) ? round2((line.quantity * line.unit_price * TAX_RATE) / 100) : 0),
     0
   );
-  const total = subtotal + tax;
+  const shipping = Array.from(groupedBySupplier.keys()).reduce(
+    (sum, key) => (key === "sin-proveedor" ? sum : sum + (shippingCostBySupplier[Number(key)] ?? 0)),
+    0
+  );
+  const total = subtotal + tax + shipping;
   const hasLineWithoutSupplier = lines.some((line) => line.id_supplier === null);
   const hasSupplierWithoutPaymentMethod = Array.from(groupedBySupplier.keys()).some(
     (key) => key !== "sin-proveedor" && !paymentMethodBySupplier[Number(key)]
@@ -107,6 +113,7 @@ export default function RevisionOrdenPage() {
           applies_iva: line.applies_iva ?? true,
         })),
         paymentMethodBySupplier,
+        shippingCostBySupplier,
       });
       if (!result.ok) {
         setError(result.message);
@@ -164,6 +171,12 @@ export default function RevisionOrdenPage() {
                     ? (idMetodoPago) => setSupplierPaymentMethod(id_supplier, idMetodoPago)
                     : undefined
                 }
+                shippingCost={id_supplier !== null ? shippingCostBySupplier[id_supplier] ?? 0 : 0}
+                onShippingCostChange={
+                  id_supplier !== null
+                    ? (value) => setSupplierShippingCost(id_supplier, value)
+                    : undefined
+                }
               />
             );
           })}
@@ -196,6 +209,12 @@ export default function RevisionOrdenPage() {
                   <span className="text-[#44474f] dark:text-zinc-400">IVA ({TAX_RATE}%)</span>
                   <span className="font-semibold text-[#0b1c30] dark:text-zinc-100">
                     {currencyFormatter.format(tax)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[#44474f] dark:text-zinc-400">Envío</span>
+                  <span className="font-semibold text-[#0b1c30] dark:text-zinc-100">
+                    {currencyFormatter.format(shipping)}
                   </span>
                 </div>
                 <div className="pt-4 mt-4 border-t border-dashed border-[#c4c6d0] dark:border-zinc-700 flex justify-between items-center">
