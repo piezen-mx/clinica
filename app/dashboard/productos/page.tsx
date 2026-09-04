@@ -73,6 +73,10 @@ export default function ProductosPage() {
     () => new Map(suppliers.map((s) => [s.id_proveedor, s.nombre_corto])),
     [suppliers]
   );
+  const unitNameById = useMemo(
+    () => new Map(unitsMeasurement.map((u) => [u.id_unit_measurement, u.name])),
+    [unitsMeasurement]
+  );
 
   const openNew = () => {
     setForm(EMPTY);
@@ -238,6 +242,7 @@ export default function ProductosPage() {
                       product={p}
                       categoryName={p.id_category ? categoryNameById.get(p.id_category) ?? "" : ""}
                       supplierName={p.id_supplier ? supplierNameById.get(p.id_supplier) ?? "" : ""}
+                      unitName={p.id_unit_measurement ? unitNameById.get(p.id_unit_measurement) ?? "" : ""}
                       onEdit={openEdit}
                       onDeleted={fetchProducts}
                     />

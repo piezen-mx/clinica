@@ -3,19 +3,22 @@
 import { IProduct } from "@/interfaces/product";
 import { deleteProduct } from "../actions";
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import ConfirmModal from "@/app/dashboard/componentes/ConfirmModal";
+import ProductViewModal from "./ProductViewModal";
 
 interface Props {
   product: IProduct;
   categoryName: string;
   supplierName: string;
+  unitName: string;
   onEdit: (product: IProduct) => void;
   onDeleted: () => void;
 }
 
-export default function ProductRow({ product, categoryName, supplierName, onEdit, onDeleted }: Props) {
+export default function ProductRow({ product, categoryName, supplierName, unitName, onEdit, onDeleted }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showView, setShowView]       = useState(false);
   const [deleting, setDeleting]       = useState(false);
   const [errorMsg, setErrorMsg]       = useState<string | null>(null);
 
@@ -81,6 +84,13 @@ export default function ProductRow({ product, categoryName, supplierName, onEdit
         <td className="px-6 py-4 text-right">
           <div className="flex justify-end gap-1">
             <button
+              onClick={() => setShowView(true)}
+              title="Ver"
+              className="p-2 rounded-full hover:bg-[#dce9ff] dark:hover:bg-zinc-700 text-[#44474f] dark:text-zinc-400 transition-colors"
+            >
+              <Eye size={18} />
+            </button>
+            <button
               onClick={() => onEdit(product)}
               title="Editar"
               className="p-2 rounded-full hover:bg-[#dce9ff] dark:hover:bg-zinc-700 text-[#44474f] dark:text-zinc-400 transition-colors"
@@ -105,6 +115,16 @@ export default function ProductRow({ product, categoryName, supplierName, onEdit
           onCancel={() => setShowConfirm(false)}
           loading={deleting}
           error={errorMsg}
+        />
+      )}
+
+      {showView && (
+        <ProductViewModal
+          product={product}
+          categoryName={categoryName}
+          supplierName={supplierName}
+          unitName={unitName}
+          onClose={() => setShowView(false)}
         />
       )}
     </>
