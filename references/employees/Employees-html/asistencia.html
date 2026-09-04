@@ -1,0 +1,403 @@
+<!DOCTYPE html><html class="h-full bg-surface" lang="es" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Asistencia e Incidencias - PodoCentro HR</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#000000",
+                        "surface-tint": "#525f77",
+                        "surface-dim": "#dbd9db",
+                        "secondary-fixed": "#dbe1ff",
+                        "surface-variant": "#e4e2e4",
+                        "on-surface": "#1b1b1d",
+                        "surface-container": "#e5eeff",
+                        "on-secondary-fixed-variant": "#003ea7",
+                        "primary-container": "#0f1c31",
+                        "error": "#ba1a1a",
+                        "surface": "#f8f9ff",
+                        "on-surface-variant": "#45474d",
+                        "primary-fixed": "#d7e3ff",
+                        "tertiary-fixed": "#d2e8d9",
+                        "secondary-container": "#346cef",
+                        "inverse-on-surface": "#f2f0f2",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f5f3f5",
+                        "on-primary-fixed-variant": "#3b475e",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#eae7e9",
+                        "on-tertiary-fixed": "#0d1f16",
+                        "inverse-primary": "#bac7e3",
+                        "on-tertiary-container": "#75887c",
+                        "outline-variant": "#c5c6cd",
+                        "on-secondary-container": "#fefcff",
+                        "on-primary-fixed": "#0f1c31",
+                        "surface-bright": "#fbf8fb",
+                        "on-tertiary-fixed-variant": "#384b40",
+                        "tertiary-container": "#0d1f16",
+                        "background": "#fbf8fb",
+                        "on-primary-container": "#78849e",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#303032",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#00174b",
+                        "tertiary-success": "#009c6b",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e4e2e4",
+                        "tertiary-fixed-dim": "#b7ccbe",
+                        "on-background": "#1b1b1d",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#747780",
+                        "secondary": "#0051d5",
+                        "primary": "#000000",
+                        "primary-fixed-dim": "#bac7e3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter-inline": "16px",
+                        "card-gap": "20px",
+                        "inline-gutter": "16px",
+                        "container-padding": "24px",
+                        "sidebar-width": "240px",
+                        "base-unit": "4px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-subtle": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-bold": ["Inter"],
+                        "title-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-subtle": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "display-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-bold": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                        "title-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="h-full flex bg-surface text-on-surface antialiased overflow-hidden">
+<!-- TopNavBar -->
+
+<!-- SideNavBar -->
+
+<!-- Main Content Canvas -->
+<main class="flex-1 mt-16 md:ml-sidebar-width h-[calc(100vh-4rem)] overflow-y-auto bg-surface p-container-padding">
+<!-- Header & Context -->
+<header class="flex justify-between items-end mb-8"><div>
+
+<h1 class="font-display-lg text-display-lg text-on-surface">Control de Asistencias</h1>
+</div>
+<div class="flex items-center gap-3">
+
+<button class="bg-primary text-on-primary px-4 py-2 rounded-full font-label-bold text-label-bold flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">more_time</span>
+Registrar Asistencia Manual
+</button>
+</div></header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-card-gap"><!-- Summary Stats Row -->
+<div class="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-card-gap">
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/50 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-bold text-label-bold text-on-surface-variant uppercase tracking-wider">Días Asistidos</span>
+<span class="material-symbols-outlined text-secondary">event_available</span>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-display-lg text-display-lg leading-none">21</span>
+<span class="font-label-subtle text-label-subtle text-on-surface-variant pb-1">/ 22 esperados</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/50 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-bold text-label-bold text-on-surface-variant uppercase tracking-wider">Horas Registradas</span>
+<span class="material-symbols-outlined text-secondary">timer</span>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-display-lg text-display-lg leading-none">168</span>
+<span class="font-label-subtle text-label-subtle text-on-surface-variant pb-1">hrs cumplidas</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/50 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-bold text-label-bold text-on-surface-variant uppercase tracking-wider">Retardos</span>
+<span class="material-symbols-outlined text-surface-tint">schedule</span>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-display-lg text-display-lg leading-none">2</span>
+<span class="font-label-subtle text-label-subtle text-on-surface-variant pb-1">acumulados</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/50 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-bold text-label-bold text-on-surface-variant uppercase tracking-wider">Entradas a Tiempo</span>
+<span class="material-symbols-outlined text-tertiary-success">task_alt</span>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-display-lg text-display-lg leading-none text-tertiary-success">95%</span>
+<span class="font-label-subtle text-label-subtle text-on-surface-variant pb-1">efectividad</span>
+</div>
+</div>
+</div>
+<!-- Unified Filters & Date Range Bar -->
+
+<!-- Main Split Columns (Table on Left, Calendar on Right) -->
+<!-- Attendance & Time Clock Log Table -->
+<div class="lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant/50 shadow-sm overflow-hidden flex flex-col">
+<div class="p-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+<div class="flex items-center gap-3">
+<h2 class="font-headline-md text-headline-md text-on-surface">Registro de Asistencias</h2>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[11px] font-semibold">42 registros</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-secondary font-label-bold text-label-bold hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">refresh</span> Actualizar
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-2">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/20">
+<th class="py-3 px-4 font-label-bold text-label-bold text-on-surface-variant font-semibold">Fecha</th>
+<th class="py-3 px-4 font-label-bold text-label-bold text-on-surface-variant font-semibold">Hora</th>
+<th class="py-3 px-4 font-label-bold text-label-bold text-on-surface-variant font-semibold">Tipo</th>
+<th class="py-3 px-4 font-label-bold text-label-bold text-on-surface-variant font-semibold">Sucursal</th>
+<th class="py-3 px-4 font-label-bold text-label-bold text-on-surface-variant font-semibold">Método</th>
+<th class="py-3 px-4 font-label-bold text-label-bold text-on-surface-variant font-semibold">Estado / Obs.</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm">
+<tr class="border-b border-outline-variant/10 hover:bg-surface-variant/50 transition-colors">
+<td class="py-3 px-4 font-medium text-on-surface">13/10/2023</td>
+<td class="py-3 px-4 font-bold text-primary">08:58</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-tertiary-fixed text-on-tertiary-fixed">
+Entrada
+</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Sucursal Matriz</td>
+<td class="py-3 px-4 text-on-surface-variant flex items-center gap-1.5 pt-4">
+<span class="material-symbols-outlined text-[16px] text-secondary">fingerprint</span> Biométrico
+</td>
+<td class="py-3 px-4"><span class="text-tertiary-success font-medium flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary-success inline-block"></span> A tiempo</span></td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-variant/50 transition-colors">
+<td class="py-3 px-4 font-medium text-on-surface">12/10/2023</td>
+<td class="py-3 px-4 font-bold text-on-surface-variant">--:--</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-error-container text-on-error-container">
+Falta
+</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Sucursal Matriz</td>
+<td class="py-3 px-4 text-on-surface-variant flex items-center gap-1.5 pt-4">
+<span class="material-symbols-outlined text-[16px] text-outline">cancel</span> No registrado
+</td>
+<td class="py-3 px-4"><span class="text-error font-medium">Descontado (Sin justificar)</span></td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-variant/50 transition-colors">
+<td class="py-3 px-4 font-medium text-on-surface">11/10/2023</td>
+<td class="py-3 px-4 font-bold text-primary">18:05</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-secondary-fixed text-on-secondary-fixed">
+Salida
+</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Sucursal Matriz</td>
+<td class="py-3 px-4 text-on-surface-variant flex items-center gap-1.5 pt-4">
+<span class="material-symbols-outlined text-[16px] text-secondary">fingerprint</span> Biométrico
+</td>
+<td class="py-3 px-4"><span class="text-on-surface-variant font-medium">Salida puntual</span></td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-variant/50 transition-colors">
+<td class="py-3 px-4 font-medium text-on-surface">11/10/2023</td>
+<td class="py-3 px-4 font-bold text-primary">09:02</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-tertiary-fixed text-on-tertiary-fixed">
+Entrada
+</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Sucursal Matriz</td>
+<td class="py-3 px-4 text-on-surface-variant flex items-center gap-1.5 pt-4">
+<span class="material-symbols-outlined text-[16px] text-secondary">fingerprint</span> Biométrico
+</td>
+<td class="py-3 px-4"><span class="text-tertiary-success font-medium flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary-success inline-block"></span> Tolerancia (2 min)</span></td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-variant/50 transition-colors">
+<td class="py-3 px-4 font-medium text-on-surface">10/10/2023</td>
+<td class="py-3 px-4 font-bold text-primary">18:15</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-secondary-fixed text-on-secondary-fixed">
+Salida
+</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Sucursal Matriz</td>
+<td class="py-3 px-4 text-on-surface-variant flex items-center gap-1.5 pt-4">
+<span class="material-symbols-outlined text-[16px] text-surface-tint">smartphone</span> App Móvil
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Cumplida</td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-variant/50 transition-colors">
+<td class="py-3 px-4 font-medium text-on-surface">10/10/2023</td>
+<td class="py-3 px-4 font-bold text-primary">08:52</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-tertiary-fixed text-on-tertiary-fixed">
+Entrada
+</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Sucursal Matriz</td>
+<td class="py-3 px-4 text-on-surface-variant flex items-center gap-1.5 pt-4">
+<span class="material-symbols-outlined text-[16px] text-secondary">fingerprint</span> Biométrico
+</td>
+<td class="py-3 px-4"><span class="text-tertiary-success font-medium flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary-success inline-block"></span> A tiempo</span></td>
+</tr>
+<tr class="border-b border-outline-variant/10 hover:bg-surface-variant/50 transition-colors">
+<td class="py-3 px-4 font-medium text-on-surface">05/10/2023</td>
+<td class="py-3 px-4 font-bold text-primary">09:45</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-surface-dim text-on-surface">
+Retardo
+</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Sucursal Papantla</td>
+<td class="py-3 px-4 text-on-surface-variant flex items-center gap-1.5 pt-4">
+<span class="material-symbols-outlined text-[16px] text-secondary">fingerprint</span> Biométrico
+</td>
+<td class="py-3 px-4"><span class="text-surface-tint font-medium">Aplicado (+45 min)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-outline-variant/30 flex items-center justify-between text-body-sm text-on-surface-variant bg-surface-bright">
+<span class="">Mostrando 1-7 de 42 registros</span>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1 rounded border border-outline-variant/50 text-label-bold bg-surface-container-lowest opacity-50 cursor-pointer" disabled="">Anterior</button>
+<button class="px-3 py-1 rounded border border-outline-variant/50 text-label-bold bg-primary text-on-primary">1</button>
+<button class="px-3 py-1 rounded border border-outline-variant/50 text-label-bold bg-surface-container-lowest hover:bg-surface-variant">2</button>
+<button class="px-3 py-1 rounded border border-outline-variant/50 text-label-bold bg-surface-container-lowest hover:bg-surface-variant">3</button>
+<button class="px-3 py-1 rounded border border-outline-variant/50 text-label-bold bg-surface-container-lowest hover:bg-surface-variant">Siguiente</button>
+</div>
+</div>
+</div>
+<!-- Interactive Calendar Widget -->
+<div class="lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant/50 shadow-sm p-5 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center mb-4">
+<div>
+<h2 class="font-title-sm text-title-sm font-semibold text-on-surface">Octubre 2023</h2>
+<span class="font-label-subtle text-label-subtle text-on-surface-variant">Selección: 05 Oct - 13 Oct</span>
+</div>
+<div class="flex gap-1">
+<button class="w-8 h-8 rounded hover:bg-surface-variant flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="w-8 h-8 rounded hover:bg-surface-variant flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+<!-- Calendar days of week -->
+<div class="grid grid-cols-7 gap-1 text-center font-label-subtle text-label-subtle mb-2">
+<div class="text-on-surface-variant">L</div>
+<div class="text-on-surface-variant">M</div>
+<div class="text-on-surface-variant">X</div>
+<div class="text-on-surface-variant">J</div>
+<div class="text-on-surface-variant">V</div>
+<div class="text-on-surface-variant opacity-50">S</div>
+<div class="text-on-surface-variant opacity-50">D</div>
+</div>
+<!-- Calendar month grid with highlighted active range and state dots -->
+<div class="grid grid-cols-7 gap-1 text-center font-body-sm text-body-sm">
+<!-- Prev month -->
+<div class="p-2 rounded text-surface-tint opacity-50">25</div>
+<div class="p-2 rounded text-surface-tint opacity-50">26</div>
+<div class="p-2 rounded text-surface-tint opacity-50">27</div>
+<div class="p-2 rounded bg-tertiary-fixed/30 text-on-surface font-medium border border-tertiary-fixed">28</div>
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">29</div>
+<div class="p-2 rounded opacity-50">30</div>
+<div class="p-2 rounded opacity-50">1</div>
+<!-- Week 2 -->
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">2</div>
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">3</div>
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">4</div>
+<!-- Day 5: Range Start (Retardo) -->
+<div class="p-2 rounded-l-lg bg-surface-dim text-on-surface font-medium relative border-l border-t border-b border-outline-variant">
+5
+<span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-surface-tint"></span>
+</div>
+<!-- In-range days 6, 7, 8 -->
+<div class="p-2 bg-secondary-fixed/30 text-on-surface font-medium">6</div>
+<div class="p-2 bg-secondary-fixed/30 text-on-surface opacity-60">7</div>
+<div class="p-2 bg-secondary-fixed/30 text-on-surface opacity-60">8</div>
+<!-- Week 3: In-range days 9, 10, 11 -->
+<div class="p-2 bg-secondary-fixed/30 text-on-surface font-medium relative">9<span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-tertiary-success"></span></div>
+<div class="p-2 bg-secondary-fixed/30 text-on-surface font-medium relative">10<span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-tertiary-success"></span></div>
+<div class="p-2 bg-secondary-fixed/30 text-on-surface font-medium relative">11<span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-tertiary-success"></span></div>
+<!-- Day 12: Range Item (Falta) -->
+<div class="p-2 bg-error-container text-on-error-container font-medium border border-error/30 relative">12</div>
+<!-- Day 13: Range End (Today - Selected) -->
+<div class="p-2 rounded-r-lg bg-primary text-on-primary font-bold shadow-sm relative">
+13
+</div>
+<div class="p-2 rounded opacity-50">14</div>
+<div class="p-2 rounded opacity-50">15</div>
+<!-- Week 4 -->
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">16</div>
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">17</div>
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">18</div>
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">19</div>
+<div class="p-2 rounded hover:bg-surface-variant cursor-pointer">20</div>
+<div class="p-2 rounded opacity-50">21</div>
+<div class="p-2 rounded opacity-50">22</div>
+</div>
+<!-- Interactive Legend with matching color palette -->
+<div class="mt-4 pt-4 border-t border-outline-variant/30 grid grid-cols-2 gap-2.5">
+<div class="flex items-center gap-2 font-label-subtle text-label-subtle">
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary-success"></div> Entrada a tiempo
+</div>
+<div class="flex items-center gap-2 font-label-subtle text-label-subtle">
+<div class="w-2.5 h-2.5 rounded-full bg-surface-dim border border-surface-tint/40"></div> Retardo
+</div>
+<div class="flex items-center gap-2 font-label-subtle text-label-subtle">
+<div class="w-2.5 h-2.5 rounded-full bg-error-container border border-error/30"></div> Falta / Incidencia
+</div>
+<div class="flex items-center gap-2 font-label-subtle text-label-subtle">
+<div class="w-2.5 h-2.5 rounded bg-secondary-fixed/40 border border-secondary/40"></div> Rango activo
+</div>
+</div>
+</div>
+<!-- Calendar Range Action Footer -->
+<div class="mt-4 pt-4 border-t border-outline-variant/30 flex items-center justify-between">
+<button class="text-on-surface-variant hover:text-on-surface text-label-bold font-label-bold">Limpiar rango</button>
+
+</div>
+</div></div>
+</main>
+
+
+</body></html>

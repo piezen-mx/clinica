@@ -34,3 +34,31 @@ export interface AttendancePostBody {
   tipo:          AttendanceEventType;
   fecha_hora:    string;             // "YYYY-MM-DD HH:mm:ss" hora local Mexico City, nunca UTC/ISO con offset
 }
+
+/** Fila de la tabla del historial: IAttendanceEvent + datos del checador resueltos por JOIN. */
+export interface IAttendanceEventListItem extends IAttendanceEvent {
+  nombre_checador: string;
+  nombre_sucursal: string;
+}
+
+/** Página de checadas + total, para la paginación server-side. */
+export interface IAttendanceEventsPage {
+  events: IAttendanceEventListItem[];
+  total:  number;   // total de checadas del rango, no de la página
+}
+
+/** Métricas de las 4 tarjetas de resumen, calculadas sobre el rango seleccionado. */
+export interface IAttendanceSummary {
+  attended_days:     number;  // días distintos con al menos una checada
+  total_events:      number;  // checadas en el rango
+  registered_hours:  number;  // suma de pares entrada→salida, en horas con 2 decimales
+  incomplete_days:   number;  // días con entrada sin salida o salida sin entrada
+}
+
+/** Estado de un día del mes visible, para el punto de color del calendario. */
+export type AttendanceDayStatus = "complete" | "incomplete";
+
+export interface IAttendanceDayState {
+  fecha:  string;               // "YYYY-MM-DD"
+  status: AttendanceDayStatus;  // los días sin checadas simplemente no vienen en el arreglo
+}
