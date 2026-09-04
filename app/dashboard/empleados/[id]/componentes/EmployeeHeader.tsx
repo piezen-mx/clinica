@@ -58,7 +58,7 @@ export default function EmployeeHeader({ employee, catalogs }: Props) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
             <InfoRow label="ID Empleado" value={employee.codigo_empleado} />
-            <InfoRow label="Teléfono" value={employee.telefono || employee.whatsapp || "—"} />
+            <InfoRow label="WhatsApp" value={employee.whatsapp || "—"} />
             <InfoRow label="Fecha de ingreso" value={dayFirst(employee.fecha_ingreso + "T00:00:00")} />
             <InfoRow label="Correo" value={employee.email || "—"} />
             <InfoRow label="Sucursal" value={employee.nombre_sucursal} />

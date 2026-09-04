@@ -809,6 +809,14 @@ CREATE INDEX [IX_empleados_apellido]
     ON [RH].[empleados] ([apellido_paterno], [apellido_materno], [nombre])
 GO
 
+-- Spec 38: segundo contacto de emergencia y salario diario fiscal.
+-- telefono, salario_quincenal, salario_mensual y comision quedan huérfanas (no se eliminan).
+ALTER TABLE [RH].[empleados] ADD
+    [contacto_emergencia_2] [varchar](150)  NULL,
+    [whatsapp_emergencia_2] [varchar](25)   NULL,
+    [salario_diario_fiscal] [decimal](12,2) NULL;
+GO
+
 -------------------- DOCUMENTOS DEL EMPLEADO ---------------------
 USE [CentroPodologico]
 GO

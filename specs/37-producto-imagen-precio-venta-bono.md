@@ -1,6 +1,6 @@
 # 37 — Modal de Producto: Imagen, Precio de Venta y Bono de Venta
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Dependencias:** spec 08 (productos-inventario-crud), spec 12 (precio-venta-productos-paquete)
 **Fecha:** 2026-09-04
 
@@ -95,22 +95,22 @@ Cada paso deja el sistema funcional y compilando.
 
 ## Criterios de aceptación
 
-- [ ] La columna `bono_venta` existe en `[CentroPodologico].[inventory].[Products]` como `DECIMAL(10,2) NULL`.
-- [ ] `IProduct` incluye `bono_venta: number | null`.
-- [ ] En "Nuevo producto"/"Editar producto", el campo "URL Producto" ya no existe como input de texto; en su lugar hay un botón para subir imagen con preview.
-- [ ] Al subir una imagen mayor a 400px de ancho, la imagen efectivamente enviada a Cloudinary mide máximo 400px de ancho (proporción conservada).
-- [ ] Tras subir una imagen, `url_product` en el formulario queda con la URL devuelta por `/api/upload`, y al guardar el producto esa URL se persiste en la BD.
-- [ ] Subir una nueva imagen sobre una ya existente reemplaza el valor de `url_product` (no hay acumulación ni botón de "quitar" separado).
-- [ ] Con `id_category === 4` (Venta) y `split` **desmarcado**, el campo "Precio de Venta" es visible y obligatorio (el formulario no permite guardar sin él).
-- [ ] Con `id_category === 4` y `split` marcado, el comportamiento de "Precio de Venta" sigue igual que antes (obligatorio).
-- [ ] Con `id_category !== 4`, "Precio de Venta" no se muestra ni se exige (comportamiento sin cambios).
-- [ ] El label de `price` no cambia respecto al comportamiento actual (`"Precio Unitario"` vs `"Precio de Compra (paquete/caja)"` según `split`).
-- [ ] El input `bono_venta` solo aparece en el modal cuando `id_category === 4`; se puede dejar vacío (`null`) sin bloquear el guardado.
-- [ ] Guardar un producto de categoría Venta con `bono_venta` capturado persiste el valor correctamente; recargar el listado y reabrir "Editar" muestra el mismo valor.
-- [ ] `ProductRow.tsx` muestra un botón "Ver" antes de "Editar" y "Eliminar".
-- [ ] El botón "Ver" abre `ProductViewModal` mostrando todos los campos del producto (incluida la imagen) sin ningún input editable ni botón de guardar.
-- [ ] Cerrar `ProductViewModal` no dispara ninguna llamada a `saveProduct` ni modifica datos.
-- [ ] `npm run build` (o `tsc`) compila sin errores de tipos tras los cambios.
+- [x] La columna `bono_venta` existe en `[CentroPodologico].[inventory].[Products]` como `DECIMAL(10,2) NULL`.
+- [x] `IProduct` incluye `bono_venta: number | null`.
+- [x] En "Nuevo producto"/"Editar producto", el campo "URL Producto" ya no existe como input de texto; en su lugar hay un botón para subir imagen con preview.
+- [x] Al subir una imagen mayor a 400px de ancho, la imagen efectivamente enviada a Cloudinary mide máximo 400px de ancho (proporción conservada).
+- [x] Tras subir una imagen, `url_product` en el formulario queda con la URL devuelta por `/api/upload`, y al guardar el producto esa URL se persiste en la BD.
+- [x] Subir una nueva imagen sobre una ya existente reemplaza el valor de `url_product` (no hay acumulación ni botón de "quitar" separado).
+- [x] Con `id_category === 4` (Venta) y `split` **desmarcado**, el campo "Precio de Venta" es visible y obligatorio (el formulario no permite guardar sin él).
+- [x] Con `id_category === 4` y `split` marcado, el comportamiento de "Precio de Venta" sigue igual que antes (obligatorio).
+- [x] Con `id_category !== 4`, "Precio de Venta" no se muestra ni se exige (comportamiento sin cambios).
+- [x] El label de `price` no cambia respecto al comportamiento actual (`"Precio Unitario"` vs `"Precio de Compra (paquete/caja)"` según `split`).
+- [x] El input `bono_venta` solo aparece en el modal cuando `id_category === 4`; se puede dejar vacío (`null`) sin bloquear el guardado.
+- [x] Guardar un producto de categoría Venta con `bono_venta` capturado persiste el valor correctamente; recargar el listado y reabrir "Editar" muestra el mismo valor.
+- [x] `ProductRow.tsx` muestra un botón "Ver" antes de "Editar" y "Eliminar".
+- [x] El botón "Ver" abre `ProductViewModal` mostrando todos los campos del producto (incluida la imagen) sin ningún input editable ni botón de guardar.
+- [x] Cerrar `ProductViewModal` no dispara ninguna llamada a `saveProduct` ni modifica datos.
+- [x] `npm run build` (o `tsc`) compila sin errores de tipos tras los cambios.
 
 ## Decisiones tomadas y descartadas
 
