@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** [27 — Checadores por sucursal y alta de PIN de empleado](27-checadores-por-sucursal.md) (crea `RH.checadores`, `RH.asistencias.id_checador`, la pestaña "Asistencia" y sus server actions de identificadores) y [25 — Módulo de Empleados](25-empleados-alta-listado-detalle.md) (expediente, `getEmployeeById`, guarda de rol en `proxy.ts`). No modifica el esquema de base de datos: solo lee `RH.asistencias`.
 - **Fecha:** 2026-09-04
 - **Objetivo:** Convertir la pestaña "Asistencia" del expediente en el historial de checadas reales del empleado — tabla paginada filtrable por rango de fechas desde un calendario, con tarjetas de resumen del rango — y mover la configuración de identificadores (PIN/checador) a un modal.
