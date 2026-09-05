@@ -79,10 +79,11 @@ export const POST = async (req: Request) => {
     }
 
     const folder = searchParams.get("folder") ?? "clinica/consultas";
+    const overwrite = searchParams.get("overwrite") === "true";
 
     const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { public_id: publicId, folder, resource_type: "auto", overwrite: false },
+        { public_id: publicId, folder, resource_type: "auto", overwrite },
         (error, result) => {
           if (error || !result) reject(error ?? new Error("Upload falló"));
           else resolve(result as { secure_url: string });
