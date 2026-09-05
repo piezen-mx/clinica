@@ -77,6 +77,11 @@ export default function ProductModal({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError]         = useState<string | null>(null);
 
+  // Id estable mientras el modal permanece abierto, usado como public_id en
+  // Cloudinary para un producto aún no guardado (ver spec 41).
+  const [tempId] = useState(() => Math.random().toString(36).slice(2, 10));
+  const stableProductKey = form.id_product > 0 ? String(form.id_product) : `tmp_${tempId}`;
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -86,13 +91,10 @@ export default function ProductModal({
     try {
       const resized = await resizeImage(file);
 
-      const sanitize = (s: string) =>
-        s.normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s+/g, "_").toLowerCase();
-      const baseName  = form.name && form.name.trim() ? sanitize(form.name) : "producto";
-      const fileName  = `${baseName}_${Date.now()}.jpg`;
+      const fileName = `producto_${stableProductKey}.jpg`;
 
       const uploadRes = await fetch(
-        `/api/upload?name=${encodeURIComponent(fileName)}&folder=clinica/productos`,
+        `/api/upload?name=${encodeURIComponent(fileName)}&folder=clinica/productos&overwrite=true`,
         {
           method: "POST",
           headers: { "Content-Type": "image/jpeg" },
@@ -282,21 +284,39 @@ export default function ProductModal({
               </select>
             </div>
 
+            <div>
+              <label className={labelClass}>URL de Compra</label>
+              <input
+                type="url"
+                name="url_compra"
+                value={form.url_compra ?? ""}
+                onChange={onChange}
+                className={inputClass}
+              />
+            </div>
+
             <div className="md:col-span-2">
               <label className={labelClass}>Imagen del Producto</label>
               <div className="flex items-center gap-4">
-                {form.url_product ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={form.url_product}
-                    alt={form.name || "Producto"}
-                    className="h-20 w-20 rounded-lg object-cover border border-[#c4c6d0] dark:border-zinc-600"
-                  />
-                ) : (
-                  <div className="h-20 w-20 rounded-lg border border-dashed border-[#c4c6d0] dark:border-zinc-600 flex items-center justify-center text-xs text-[#747780] dark:text-zinc-500 text-center px-1">
-                    Sin imagen
-                  </div>
-                )}
+                <div className="relative h-20 w-20 shrink-0">
+                  {form.url_product ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={form.url_product}
+                      alt={form.name || "Producto"}
+                      className="h-20 w-20 rounded-lg object-cover border border-[#c4c6d0] dark:border-zinc-600"
+                    />
+                  ) : (
+                    <div className="h-20 w-20 rounded-lg border border-dashed border-[#c4c6d0] dark:border-zinc-600 flex items-center justify-center text-xs text-[#747780] dark:text-zinc-500 text-center px-1">
+                      Sin imagen
+                    </div>
+                  )}
+                  {uploadingImage && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-col gap-1">
                   <input
                     ref={imageInputRef}
