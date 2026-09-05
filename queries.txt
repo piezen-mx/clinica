@@ -1090,3 +1090,6 @@ GO
 
 ALTER TABLE [CentroPodologico].[inventory].[Products] ADD [bono_venta] [decimal](10,2) NULL -- bono de venta; solo aplica a productos de categoria Venta (id_category = 4), sin default para distinguir "sin bono" de "bono de $0"
 GO
+
+ALTER TABLE [CentroPodologico].[inventory].[Products] ADD [url_compra] NVARCHAR(500) NULL -- URL de compra del producto (opcional, sin validacion de formato)
+GO
