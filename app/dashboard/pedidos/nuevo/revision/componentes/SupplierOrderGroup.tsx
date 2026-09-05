@@ -15,6 +15,9 @@ interface Props {
   selectedPaymentMethodId:  number | null;
   /** undefined cuando el grupo no tiene proveedor asignado (no aplica método de pago). */
   onPaymentMethodChange?:   (idMetodoPago: number) => void;
+  shippingCost:             number;
+  /** undefined cuando el grupo no tiene proveedor asignado (no aplica gasto de envío). */
+  onShippingCostChange?:    (value: number) => void;
 }
 
 const currencyFormatter = new Intl.NumberFormat("es-MX", {
@@ -30,31 +33,56 @@ export default function SupplierOrderGroup({
   paymentMethods,
   selectedPaymentMethodId,
   onPaymentMethodChange,
+  shippingCost,
+  onShippingCostChange,
 }: Props) {
   const { setLineQuantity, setLineUnitPrice, setLineSupplier, setLineAppliesIva, removeLine } =
     usePurchaseCart();
+
+  const groupSubtotal = lines.reduce((sum, line) => sum + line.quantity * line.unit_price, 0);
+  const groupTotal = groupSubtotal + (onShippingCostChange ? shippingCost : 0);
 
   return (
     <div className="space-y-4">
       <div className="bg-white dark:bg-zinc-900 border border-[#c4c6d0] dark:border-zinc-700 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h3 className="text-lg font-bold text-[#0b1c30] dark:text-zinc-50">{supplierName}</h3>
-        {onPaymentMethodChange && (
-          <div className="flex flex-col gap-1 w-full md:w-56">
-            <label className="text-xs text-[#44474f] dark:text-zinc-400">Método de pago</label>
-            <select
-              value={selectedPaymentMethodId ?? ""}
-              onChange={(e) => onPaymentMethodChange(Number(e.target.value))}
-              className="rounded-lg border border-[#c4c6d0] dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-[#0b1c30] dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-[#0051d5] focus:border-[#0051d5]"
-            >
-              <option value="" disabled>
-                Selecciona un método
-              </option>
-              {paymentMethods.map((metodo) => (
-                <option key={metodo.idMetodoPago} value={metodo.idMetodoPago}>
-                  {metodo.descripcion}
-                </option>
-              ))}
-            </select>
+        {(onPaymentMethodChange || onShippingCostChange) && (
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+            {onPaymentMethodChange && (
+              <div className="flex flex-col gap-1 w-full md:w-56">
+                <label className="text-xs text-[#44474f] dark:text-zinc-400">Método de pago</label>
+                <select
+                  value={selectedPaymentMethodId ?? ""}
+                  onChange={(e) => onPaymentMethodChange(Number(e.target.value))}
+                  className="rounded-lg border border-[#c4c6d0] dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-[#0b1c30] dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-[#0051d5] focus:border-[#0051d5]"
+                >
+                  <option value="" disabled>
+                    Selecciona un método
+                  </option>
+                  {paymentMethods.map((metodo) => (
+                    <option key={metodo.idMetodoPago} value={metodo.idMetodoPago}>
+                      {metodo.descripcion}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {onShippingCostChange && (
+              <div className="flex flex-col gap-1 w-full md:w-40">
+                <label className="text-xs text-[#44474f] dark:text-zinc-400">Gasto de envío</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={shippingCost || ""}
+                  placeholder="0.00"
+                  onChange={(e) =>
+                    onShippingCostChange(Math.max(0, Number(e.target.value) || 0))
+                  }
+                  className="rounded-lg border border-[#c4c6d0] dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-right text-[#0b1c30] dark:text-zinc-100 outline-none focus:ring-1 focus:ring-[#0051d5] focus:border-[#0051d5]"
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -155,6 +183,14 @@ export default function SupplierOrderGroup({
               </div>
             );
           })}
+        </div>
+        <div className="px-6 py-4 border-t border-[#c4c6d0] dark:border-zinc-700 bg-[#eff4ff] dark:bg-zinc-800 flex justify-between items-center">
+          <span className="text-sm font-semibold text-[#0b1c30] dark:text-zinc-100">
+            Total del proveedor
+          </span>
+          <span className="text-sm font-bold text-[#0051d5] dark:text-blue-400">
+            {currencyFormatter.format(groupTotal)}
+          </span>
         </div>
       </div>
     </div>
