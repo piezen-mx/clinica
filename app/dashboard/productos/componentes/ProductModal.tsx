@@ -29,8 +29,8 @@ const inputClass =
   "w-full rounded-lg border border-[#c4c6d0] dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2 text-sm text-[#0b1c30] dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-[#0051d5] focus:border-[#0051d5] transition-colors";
 const labelClass = "block text-xs font-semibold text-[#44474f] dark:text-zinc-400 mb-1";
 
-/** Mismo patrón que TabFotos.tsx, pero con maxWidth = 400 (ver spec 37). */
-const resizeImage = (file: File, maxWidth = 400, quality = 0.82): Promise<Blob> =>
+/** Mismo patrón que TabFotos.tsx, pero con maxWidth = 500 (ver spec 37). */
+const resizeImage = (file: File, maxWidth = 500, quality = 0.82): Promise<Blob> =>
   new Promise((resolve, reject) => {
     const img       = new Image();
     const objectUrl = URL.createObjectURL(file);

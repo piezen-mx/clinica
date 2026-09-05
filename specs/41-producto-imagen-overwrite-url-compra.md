@@ -2,7 +2,7 @@
 
 ## Header
 
-- **Estado:** Aprobado
+- **Estado:** Implementado
 - **Depende de:** [37-producto-imagen-precio-venta-bono](37-producto-imagen-precio-venta-bono.md) (introdujo el uploader de imagen y `ProductViewModal.tsx` que esta spec modifica)
 - **Modifica base de datos:** Sí. Nueva columna `inventory.Products.url_compra` (nullable), vía `ALTER TABLE`.
 - **Fecha:** 2026-09-05
@@ -132,20 +132,20 @@ Cada paso deja el sistema funcional y compilando.
 
 ## Criterios de aceptación
 
-- [ ] La columna `url_compra` existe en `[CentroPodologico].[inventory].[Products]` como `NVARCHAR(500) NULL`.
-- [ ] `IProduct` incluye `url_compra: string | null`.
-- [ ] `/api/upload` acepta `?overwrite=true`; sin ese param, el comportamiento es idéntico al actual (`overwrite: false`).
-- [ ] Mientras se sube una imagen en `ProductModal.tsx`, se ve un spinner circular sobre el recuadro de preview/placeholder de la imagen.
-- [ ] En un producto **existente**, subir dos imágenes distintas en ediciones separadas usa el mismo nombre de archivo (`producto_{id_product}`) y `overwrite=true`, de modo que la segunda sustituye a la primera en Cloudinary (no queda un asset adicional para ese producto).
-- [ ] En un producto **nuevo** (aún sin guardar), subir dos imágenes distintas dentro del mismo modal abierto sustituye la primera por la segunda en Cloudinary (mismo `public_id` temporal).
-- [ ] Cerrar el modal de un producto nuevo sin guardar, tras haber subido una imagen, no bloquea ni rompe nada (el asset temporal queda en Cloudinary sin referencia, aceptado como comportamiento conocido).
-- [ ] El formulario de alta/edición muestra un input "URL de Compra"; se puede dejar vacío sin bloquear el guardado ni exigir formato de URL.
-- [ ] Guardar un producto con `url_compra` capturado persiste el valor; recargar el listado y reabrir "Editar" muestra el mismo valor.
-- [ ] `ProductViewModal.tsx` muestra un campo "URL de Compra": link cliqueable cuando hay valor (abre en pestaña nueva), o "—" cuando está vacío.
-- [ ] En `ProductViewModal.tsx`, hacer click sobre la miniatura de la imagen (cuando existe) abre un lightbox con la imagen a tamaño completo; hay una forma de cerrarlo (click fuera o botón) que regresa al detalle sin cerrar el modal completo.
-- [ ] Sin imagen (`url_product` vacío), la miniatura no es cliqueable ni intenta abrir un lightbox vacío.
-- [ ] La pantalla se ve correctamente en modo claro y oscuro, consistente con el resto de Productos.
-- [ ] `npm run build` compila sin errores ni warnings nuevos.
+- [x] La columna `url_compra` existe en `[CentroPodologico].[inventory].[Products]` como `NVARCHAR(500) NULL`.
+- [x] `IProduct` incluye `url_compra: string | null`.
+- [x] `/api/upload` acepta `?overwrite=true`; sin ese param, el comportamiento es idéntico al actual (`overwrite: false`).
+- [x] Mientras se sube una imagen en `ProductModal.tsx`, se ve un spinner circular sobre el recuadro de preview/placeholder de la imagen.
+- [x] En un producto **existente**, subir dos imágenes distintas en ediciones separadas usa el mismo nombre de archivo (`producto_{id_product}`) y `overwrite=true`, de modo que la segunda sustituye a la primera en Cloudinary (no queda un asset adicional para ese producto).
+- [x] En un producto **nuevo** (aún sin guardar), subir dos imágenes distintas dentro del mismo modal abierto sustituye la primera por la segunda en Cloudinary (mismo `public_id` temporal).
+- [x] Cerrar el modal de un producto nuevo sin guardar, tras haber subido una imagen, no bloquea ni rompe nada (el asset temporal queda en Cloudinary sin referencia, aceptado como comportamiento conocido).
+- [x] El formulario de alta/edición muestra un input "URL de Compra"; se puede dejar vacío sin bloquear el guardado ni exigir formato de URL.
+- [x] Guardar un producto con `url_compra` capturado persiste el valor; recargar el listado y reabrir "Editar" muestra el mismo valor.
+- [x] `ProductViewModal.tsx` muestra un campo "URL de Compra": link cliqueable cuando hay valor (abre en pestaña nueva), o "—" cuando está vacío.
+- [x] En `ProductViewModal.tsx`, hacer click sobre la miniatura de la imagen (cuando existe) abre un lightbox con la imagen a tamaño completo; hay una forma de cerrarlo (click fuera o botón) que regresa al detalle sin cerrar el modal completo.
+- [x] Sin imagen (`url_product` vacío), la miniatura no es cliqueable ni intenta abrir un lightbox vacío.
+- [x] La pantalla se ve correctamente en modo claro y oscuro, consistente con el resto de Productos.
+- [x] `npm run build` compila sin errores ni warnings nuevos.
 
 ## Decisiones tomadas y descartadas
 
