@@ -27,6 +27,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default function ProductViewModal({ product, categoryName, supplierName, unitName, onClose }: Props) {
   const [mounted, setMounted] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
   const fmtPrice = (val: number | null) =>
@@ -55,7 +56,8 @@ export default function ProductViewModal({ product, categoryName, supplierName, 
               <img
                 src={product.url_product}
                 alt={product.name}
-                className="h-32 w-32 rounded-lg object-cover border border-[#c4c6d0] dark:border-zinc-600"
+                onClick={() => setShowFullImage(true)}
+                className="h-32 w-32 rounded-lg object-cover border border-[#c4c6d0] dark:border-zinc-600 cursor-pointer"
               />
             ) : (
               <div className="h-32 w-32 rounded-lg border border-dashed border-[#c4c6d0] dark:border-zinc-600 flex items-center justify-center text-xs text-[#747780] dark:text-zinc-500 text-center px-1">
@@ -86,6 +88,23 @@ export default function ProductViewModal({ product, categoryName, supplierName, 
             {isVenta && <Field label="Bono de Venta" value={fmtPrice(product.bono_venta)} />}
             <Field label="No. Producto/Código de Barras" value={product.product_code || "—"} />
             <Field label="Proveedor" value={supplierName || "—"} />
+            <Field
+              label="URL de Compra"
+              value={
+                product.url_compra ? (
+                  <a
+                    href={product.url_compra}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0051d5] hover:underline break-all"
+                  >
+                    {product.url_compra}
+                  </a>
+                ) : (
+                  "—"
+                )
+              }
+            />
             <Field label={product.split ? "Piezas por Paquete/Caja" : "Piezas por Producto"} value={product.pieces ?? "—"} />
             <Field label="Stock Mínimo" value={product.min_stock ?? "—"} />
             <Field
@@ -110,6 +129,28 @@ export default function ProductViewModal({ product, categoryName, supplierName, 
           </button>
         </div>
       </div>
+
+      {showFullImage && product.url_product && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setShowFullImage(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setShowFullImage(false)}
+            className="absolute top-4 right-4 text-3xl leading-none text-white/80 hover:text-white"
+          >
+            &times;
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={product.url_product}
+            alt={product.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+          />
+        </div>
+      )}
     </div>,
     document.body
   );

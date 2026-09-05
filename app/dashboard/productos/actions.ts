@@ -45,7 +45,8 @@ export async function getProducts(): Promise<IProduct[]> {
             [status],
             [split],
             [url_product],
-            [bono_venta]
+            [bono_venta],
+            [url_compra]
        FROM [CentroPodologico].[inventory].[Products]
       WHERE [status] = 1
         AND [id_empresa] = @id_empresa
@@ -113,6 +114,7 @@ export async function saveProduct(
       split,
       url_product,
       bono_venta,
+      url_compra,
     } = form;
 
     if (!name || !name.trim()) {
@@ -192,6 +194,7 @@ export async function saveProduct(
       split,
       url_product,
       bono_venta,
+      url_compra,
     };
 
     if (id_product === 0) {
@@ -200,13 +203,13 @@ export async function saveProduct(
            ([id_product],[name],[id_category],[brand],[presentation],[id_unit_measurement],
             [size],[price],[sale_price],[product_code],[id_supplier],[pieces],[min_stock],
             [auto_consume],[consumption_per_consultation],[id_empresa],[description],
-            [created_at],[activo],[status],[split],[url_product],[bono_venta])
+            [created_at],[activo],[status],[split],[url_product],[bono_venta],[url_compra])
          VALUES (
            (SELECT ISNULL(MAX([id_product]), 0) + 1 FROM [CentroPodologico].[inventory].[Products]),
            @name,@id_category,@brand,@presentation,@id_unit_measurement,
            @size,@price,@sale_price,@product_code,@id_supplier,@pieces,@min_stock,
            @auto_consume,@consumption_per_consultation,@id_empresa,@description,
-           @created_at,@activo,1,@split,@url_product,@bono_venta
+           @created_at,@activo,1,@split,@url_product,@bono_venta,@url_compra
          )`,
         { ...commonParams, id_empresa, created_at: buildDate(new Date()) }
       );
@@ -231,7 +234,8 @@ export async function saveProduct(
            [activo]               = @activo,
            [split]                = @split,
            [url_product]         = @url_product,
-           [bono_venta]          = @bono_venta
+           [bono_venta]          = @bono_venta,
+           [url_compra]          = @url_compra
          WHERE [id_product] = @id_product
            AND [id_empresa] = @id_empresa`,
         { id_product, id_empresa, ...commonParams }
