@@ -32,6 +32,7 @@ const EMPTY: ProductFormData = {
   split: false,
   url_product: "",
   bono_venta: null,
+  url_compra: null,
 };
 
 export default function ProductosPage() {
@@ -106,6 +107,7 @@ export default function ProductosPage() {
       split: product.split,
       url_product: product.url_product ?? "",
       bono_venta: product.bono_venta,
+      url_compra: product.url_compra,
     });
     setError(null);
     setShowModal(true);
