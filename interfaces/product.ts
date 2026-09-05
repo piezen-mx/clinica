@@ -22,4 +22,5 @@ export interface IProduct {
   split:                boolean;
   url_product:          string;
   bono_venta:           number | null;
+  url_compra:           string | null;
 }
