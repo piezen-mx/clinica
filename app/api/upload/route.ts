@@ -46,6 +46,19 @@ function detectMimeFromBytes(buf: Buffer): string | null {
   return null;
 }
 
+/**
+ * Cloudinary rejects public_ids containing characters like <, >, ?, #, %, etc.
+ * Strip anything outside the safe set (letters, numbers, underscore, dash, dot,
+ * forward slash) and collapse repeated underscores left behind by the removal.
+ */
+function sanitizePublicId(rawName: string): string {
+  const sanitized = rawName
+    .replace(/[^\w\-./]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return sanitized || "archivo";
+}
+
 // The SDK reads CLOUDINARY_URL automatically — no manual config needed.
 
 export const POST = async (req: Request) => {
@@ -53,7 +66,7 @@ export const POST = async (req: Request) => {
     const { searchParams } = new URL(req.url);
     const fileName = searchParams.get("name") ?? "archivo";
     // Strip extension to use as public_id; Cloudinary adds the extension itself.
-    const publicId = fileName.replace(/\.[^.]+$/, "");
+    const publicId = sanitizePublicId(fileName.replace(/\.[^.]+$/, ""));
 
     // ── 1. Validate declared Content-Type ──────────────────────────────────
     const declaredType = (req.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
